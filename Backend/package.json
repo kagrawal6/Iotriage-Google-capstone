@@ -1,0 +1,23 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend built on NodeJs and Express",
+  "homepage": "https://github.com/kagrawal6/Iotriage-Google-capstone#readme",
+  "bugs": {
+    "url": "https://github.com/kagrawal6/Iotriage-Google-capstone/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kagrawal6/Iotriage-Google-capstone.git"
+  },
+  "license": "ISC",
+  "author": "Justin Huang, Rafael Pavon",
+  "type": "commonjs",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
