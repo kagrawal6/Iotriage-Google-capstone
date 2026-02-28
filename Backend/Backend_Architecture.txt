@@ -1,0 +1,85 @@
+Backend Architecture:
+
+
+[Frontend React UI]
+        |
+        | POST /api/scan
+        | GET /api/devices
+        | POST /api/analyze
+        | GET /api/results
+        v
+   [Routes: scanRoutes.js]
+        |
+        | maps URLs to controller methods:
+        | - POST /api/scan       -> scanController.runScan()
+        | - GET  /api/devices    -> scanController.getDevices()
+        | - POST /api/analyze    -> cveController.analyzeDevices()
+        | - GET  /api/results    -> cveController.getVulnerabilities()
+        v
+[Scan Controller: scanController.js]
+        |
+        | Methods:
+        | - runScan()             -> triggers Python + Nmap scanner
+        | - parseScanOutput()     -> converts scanner JSON to device objects
+        | - getDevices()          -> retrieves stored devices
+        v
+   [Python + Nmap Scanner]
+        |
+        | Methods:
+        | - scanNetwork()         -> discovers IPs, ports, services, OS
+        | - saveJSON()            -> outputs JSON for backend
+        v
+[Device Model: deviceModel.js]
+        |
+        | Methods:
+        | - addDevice(device)     -> store a device
+        | - getAllDevices()       -> retrieve all devices
+        | - clearDevices()        -> remove all devices
+        v
+[CVE Controller: cveController.js]
+        |
+        | Methods:
+        | - analyzeDevices()      -> convert devices to CPE, query NVD, filter CVEs
+        | - getVulnerabilities()  -> return stored vulnerability data
+        | - generateMitigation()  -> call LLM to produce readable mitigation steps
+        v
+     [NVD API]  <-- Methods:
+        | - fetchCVEs(cpe)       -> get potential vulnerabilities for device
+        v
+[Vulnerability Model: vulnerabilityModel.js]
+        |
+        | Methods:
+        | - addVulnerability(vuln) -> store a CVE
+        | - getAllVulnerabilities() -> retrieve CVEs
+        | - clearVulnerabilities()  -> remove CVEs
+        v
+       [LLM Integration]
+        |
+        | Methods:
+        | - summarizeCVE(cveData) -> produce plain-English explanation
+        | - createMitigationSteps() -> actionable advice for user
+        v
+[Backend API Response] ---> JSON sent back to React frontend
+
+[package.json]  <-- manages dependencies and scripts
+[.env]          <-- stores API keys and configuration variables
+
+
+
+How it works (step by step)
+
+1. User clicks Scan → frontend sends POST /api/scan → scanController.runScan()
+
+2. Python + Nmap scans the network → produces JSON via scanNetwork() and saveJSON()
+
+3. JSON parsed → devices stored with deviceModel.addDevice()
+
+4. User clicks Analyze → POST /api/analyze → cveController.analyzeDevices()
+
+5. Devices converted to CPE → NVD API queried with fetchCVEs(cpe)
+
+6. Vulnerabilities stored in vulnerabilityModel.addVulnerability()
+
+7. LLM called via summarizeCVE() + createMitigationSteps()
+
+8. Frontend gets JSON from cveController.getVulnerabilities() → displays cards & tables
