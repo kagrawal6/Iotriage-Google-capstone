@@ -13,7 +13,7 @@
  * It only wires the system together.
  * 
  */
-
+require('dotenv').config();
 const express = require("express");
 const scanRoutes = require("./Routes/scanRoutes");
 
