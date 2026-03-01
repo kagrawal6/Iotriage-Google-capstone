@@ -1,5 +1,6 @@
 import nmap
 import socket
+import json
 
 def get_local_ip():
     """
@@ -22,17 +23,87 @@ def get_local_ip():
         return None
     
 def scan_network(scanner, target_network):
-	"""
-	Scans the given target network using nmap with flags for OS and version detection.
-	"""
-	options = "-T4 -O -sV -v"
-	print(f"Starting scan on network: {target_network}")
-	scanner.scan(target_network, arguments=options)
-	print("Scan complete!")
+    """
+    Scans the given target network using nmap with flags for OS and version detection.
+    """
+    options = "-T4 -O -sV -v"
+    print(f"Starting scan on network: {target_network}")
+    scanner.scan(target_network, arguments=options)
+    print("Scan complete!")
      
-def parse_scan_to_json(scanner):
-     pass  
-	# TODO: Implement a function to parse nmap scan results into JSON format for easier consumption
+def parse_scan_to_json(scanner, output_filename="scan_results.json"):
+    """
+    Parses the raw python-nmap dictionary into JSON format
+    """
+    print("Parsing scan data to JSON...")
+    extracted_data = []
+
+    for host in scanner.all_hosts():
+        if scanner[host].state() != 'up':
+            continue
+
+        # 1. Extract Device Name (Hostname)
+        # Nmap returns a list of dictionaries for hostnames. We want the first valid name.
+        hostnames = scanner[host].get('hostnames', [])
+        device_name = "Unknown"
+        for hn in hostnames:
+            if hn.get('name'):
+                device_name = hn['name']
+                break
+
+        # 2. Extract Device Type
+        device_type = "Unknown"
+        if 'osmatch' in scanner[host] and len(scanner[host]['osmatch']) > 0:
+            best_os_match = scanner[host]['osmatch'][0]
+            if 'osclass' in best_os_match and len(best_os_match['osclass']) > 0:
+                device_type = best_os_match['osclass'][0].get('type', 'Unknown')
+
+        # 3. Setup the base device info dictionary
+        device_info = {
+            "ip_address": host,
+            "mac_address": scanner[host]['addresses'].get('mac', 'Unknown'),
+            "device_name": device_name,
+            "device_type": device_type,
+            "os_matches": [],
+            "open_ports": []
+        }
+
+        # 4. Extract OS matches and OS CPEs
+        if 'osmatch' in scanner[host]:
+            for os in scanner[host]['osmatch']:
+                cpe_list = []
+                if 'osclass' in os and len(os['osclass']) > 0:
+                    cpe_list = os['osclass'][0].get('cpe', [])
+
+                device_info['os_matches'].append({
+                    "name": os['name'],
+                    "accuracy": os['accuracy'],
+                    "cpe": cpe_list
+                })
+
+        # 5. Extract Open Ports, Services, and Service CPEs
+        for proto in scanner[host].all_protocols():
+            ports = scanner[host][proto].keys()
+            for port in ports:
+                port_data = scanner[host][proto][port]
+                
+                if port_data['state'] == 'open':
+                    device_info['open_ports'].append({
+                        "port": port,
+                        "protocol": proto,
+                        "service": port_data.get('name', 'Unknown'),
+                        "product": port_data.get('product', 'Unknown'),
+                        "version": port_data.get('version', 'Unknown'),
+                        "cpe": port_data.get('cpe', 'None')
+                    })
+
+        extracted_data.append(device_info)
+
+    # Save to file
+    with open(output_filename, 'w') as json_file:
+        json.dump(extracted_data, json_file, indent=4)
+        
+    print(f"Results successfully saved to '{output_filename}'")
 
 def main():
     scanner = nmap.PortScanner()
@@ -47,7 +118,6 @@ def main():
 
         scan_network(scanner, target_network)
         
-        # TODO: Find a way to display intermediary results / progress and parse into JSON
         parse_scan_to_json(scanner)
         
         print("Scan complete!")
