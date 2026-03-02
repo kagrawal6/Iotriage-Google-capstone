@@ -28,8 +28,8 @@ function extractCvss(metrics = {}) {
 
 /**
  * NVD lookup: given a CPE 2.3 string, returns a compact list of CVEs.
- * - Limits results to `maxToReturn` for demo/perf
- * - Uses pagination so you can expand later
+ * TODO - change return results to more fields
+ * TODO - ad pagination support as well
  */
 async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
   if (!cpeName || typeof cpeName !== "string") {
