@@ -1,16 +1,17 @@
 /**
- * scanController.js
+ * ScanController.js
  * -----------------
- * Handles uploaded Nmap scan JSON and processes devices and vulnerabilities.
+ * Handles uploaded Nmap scan JSON and processes devices, vulnerabilities, and mitigations.
  */
 
 const Device = require("../Models/device");
 const Vulnerability = require("../Models/vulnerability");
 const nvdService = require("../Services/nvdService");
+const llmService = require("../Services/llmService");
 
 /**
  * Processes uploaded Nmap scan JSON.
- * Converts devices, queries CVEs, and returns results.
+ * Converts devices, queries CVEs, generates mitigations, and returns results.
  * @param {Request} req
  * @param {Response} res
  */
@@ -20,8 +21,9 @@ exports.uploadScan = async (req, res) => {
 
     // Convert raw JSON into Device objects
     const devices = scanData.map(d => new Device(d));
-    const vulnerabilities = [];
+    let vulnerabilities = [];
 
+    // Process each device
     for (const device of devices) {
       const cpes = device.getCPEs();
 
@@ -38,6 +40,15 @@ exports.uploadScan = async (req, res) => {
         }
       }
     }
+
+    // Generate mitigation steps using LLM service
+    const mitigations = await llmService.createMitigationSteps(vulnerabilities);
+
+    // Attach mitigation advice to vulnerability objects
+    vulnerabilities = vulnerabilities.map(vuln => {
+      const match = mitigations.find(m => m.cveId === vuln.cveId);
+      return { ...vuln, mitigation: match ? match.mitigation : null };
+    });
 
     res.json({
       devices,

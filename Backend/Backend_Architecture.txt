@@ -1,60 +1,70 @@
 Backend Architecture:
 
-[Frontend React UI]
-        |
-        | -- 1) Upload Nmap scan JSON -->
-        | POST /api/upload
-        v
-[Routes/ScanRoutes.js]
-        |
-        | Maps URL → scanController.uploadScan()
-        v
-[Controllers/ScanController.js]
-        |
-        | - Converts raw JSON → Device objects
-        | - For each device, extracts CPEs (device.getCPEs())
-        | - For each CPE, fetch CVEs via nvdService.fetchCVEs(cpe)
-        | - Create Vulnerability objects
-        | - Returns JSON response:
-        |   {
-        |     devices: [...],
-        |     vulnerabilities: [...]
-        |   }
-        v
-[Services/NvdService.js]
-        |
-        | Placeholder logic:
-        | - Receives CPE
-        | - Returns CVE array (id, description, severity)
-        v
-[Frontend React UI]
-        |
-        | Receives JSON response:
-        | - Renders devices table/cards
-        | - Renders vulnerabilities table/cards
-        |
-        | -- 2) Chat/AI interaction -->
-        | POST /api/chat
-        v
-[Routes/ChatRoutes.js]
-        |
-        | Maps URL → chatController.sendMessage()
-        v
-[Controllers/ChatController.js]
-        |
-        | - Receives chatHistory and new user message
-        | - Calls llmService.sendChatToLLM(chatHistory, message)
-        | - Returns AI response JSON
-        v
-[Services/LlmService.js]
-        |
-        | Placeholder LLM integration:
-        | - Receives chat context & new message
-        | - Returns AI-generated response string
-        v
-[Frontend React UI]
-        |
-        | Displays AI response to user in chat interface
+Frontend
+┌─────────────────────────────┐
+│ 1. User uploads Nmap scan   │
+│    JSON file                │
+└─────────────┬───────────────┘
+              │
+              ▼
+POST /api/upload
+              │
+              ▼
+ScanRoutes.js
+┌─────────────────────────────┐
+│ Maps /upload → uploadScan() │
+└─────────────┬───────────────┘
+              │
+              ▼
+ScanController.uploadScan()
+┌─────────────────────────────────────────────────────┐
+│ 1. Convert raw JSON → Device objects                │
+│ 2. For each Device:                                 │
+│    a. device.getCPEs() → extract CPE strings        │
+│    b. nvdService.fetchCVEs(cpe) → get CVEs          │
+│    c. Create Vulnerability objects                  │
+│ 3. llmService.createMitigationSteps(vulnerabilities)│
+│ 4. Attach mitigation advice to each Vulnerability   │
+│ 5. Return JSON:                                     │
+│    { devices: [...], vulnerabilities: [...] }       │
+└─────────────┬─────────────────────────────────────--┘
+              │
+              ▼
+Frontend receives JSON
+┌─────────────────────────────┐
+│ Renders devices table/cards │
+│ Renders vulnerabilities     │
+│ Renders mitigation steps    │
+└─────────────┬───────────────┘
+              │
+              ▼
+User sends chat message
+┌─────────────────────────────┐
+│ e.g., "What should I do     │
+│ about CVE-2023-1234?"       │
+└─────────────┬───────────────┘
+              │
+POST /api/chat
+              │
+              ▼
+ChatRoutes.js
+┌─────────────────────────────┐
+│ Maps /chat → sendMessage()  │
+└─────────────┬───────────────┘
+              │
+              ▼
+ChatController.sendMessage()
+┌───────────────────────────────────────────────┐
+│ 1. Receives chatHistory + new user message    │
+│ 2. llmService.sendChatToLLM(chatHistory, msg) │
+│ 3. Returns AI response: { reply: "..." }      │
+└─────────────┬───────────────────────────────--┘
+              │
+              ▼
+Frontend displays AI response
+┌─────────────────────────────┐
+│ Chat interface updates      │
+└─────────────────────────────┘
 
 
 
@@ -63,38 +73,41 @@ Chronological Steps (Step-by-Step)
 
 1. User uploads Nmap scan JSON from the frontend.
 
-2. Frontend sends POST /api/upload with the scan JSON.
+2. Frontend sends POST /api/upload with scan JSON.
 
-3. ScanRoutes.js maps the request to scanController.uploadScan().
+3. scanRoutes.js maps the request → scanController.uploadScan().
 
-4. scanController.uploadScan():
+4. scanController.uploadScan() processes the scan:
    - Converts raw JSON → Device objects.
    - For each device:
-       - Calls device.getCPEs() to extract CPE strings.
-       - Queries NVD via nvdService.fetchCVEs(cpe) to get CVEs.
-       - Creates Vulnerability objects for each CVE.
+     - Calls device.getCPEs() → extracts CPE strings.
+     - Calls nvdService.fetchCVEs(cpe) → retrieves CVEs.
+     - Creates Vulnerability objects.
+   - Generates mitigation steps for all vulnerabilities.
+   - Attaches mitigation advice to each vulnerability.
    - Returns JSON:
      {
        "devices": [...],
-       "vulnerabilities": [...]
+       "vulnerabilities": [...],
+       "mitigations": [...]
      }
 
-5. Frontend receives JSON and renders:
-   - Devices table/cards.
-   - Vulnerabilities table/cards.
+5. Frontend receives JSON → renders:
+   - Devices → table/cards
+   - Vulnerabilities → table/cards
+   - Mitigation steps → instructions for user
 
 6. User sends a chat message (e.g., "What should I do about CVE-2023-1234?").
 
 7. Frontend sends POST /api/chat with:
-   - chatHistory (full local conversation)
+   - chatHistory (full conversation from local storage)
    - message (new user input)
 
-8. ChatRoutes.js maps the request to chatController.sendMessage().
+8. chatRoutes.js maps → chatController.sendMessage().
 
 9. chatController.sendMessage():
-   - Calls llmService.sendChatToLLM(chatHistory, message)
-   - Receives AI-generated response
-   - Returns JSON:
-     { "reply": "AI response" }
+   - Calls llmService.sendChatToLLM(chatHistory, message).
+   - Receives AI-generated response.
+   - Returns JSON: { reply: "AI response" }.
 
-10. Frontend receives AI response and displays it in the chat interface.
+10. Frontend receives AI response → displays it in chat interface.

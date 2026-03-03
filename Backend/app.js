@@ -2,7 +2,7 @@
  * app.js
  * -------
  * Entry point for the backend server.
- * Configures middleware and registers routes.
+ * Configures middleware and registers API routes.
  */
 
 const express = require("express");
