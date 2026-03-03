@@ -1,4 +1,5 @@
 const NVD_BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0";
+const API_KEY = "41efb0c3-9d9b-43de-9c6d-e8333e5bd998"
 
 /**
  * Extracts best available CVSS score+severity from NVD metrics v1, v2, v3.0/1
@@ -38,7 +39,7 @@ async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
 
   const collected = [];
   let startIndex = 0;
-  const resultsPerPage = Math.min(maxToReturn, 50);
+  const resultsPerPage = Math.min(maxToReturn, 50); // TODO - later do pagination
 
   while (collected.length < maxToReturn) {
     const url = new URL(NVD_BASE);
@@ -97,7 +98,7 @@ async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
 // Example - TODO modify to take cpe from json file 
 async function demo() {
   const cpe = "cpe:2.3:a:apache:log4j:2.14.1:*:*:*:*:*:*:*"; // example
-  const apiKey = process.env.NVD_API_KEY || null; // with API key you get higher rate tlimits - TODO 
+  const apiKey = API_KEY || null; 
 
   const results = await getCvesByCpe(cpe, { apiKey, maxToReturn: 10 });
   console.log(`Found ${results.length} CVEs for CPE: ${cpe}`);
