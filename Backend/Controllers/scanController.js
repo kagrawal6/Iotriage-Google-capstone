@@ -1,29 +1,26 @@
 /**
- * scanController.js
- * ------------------
- * Handles uploaded scan files and controls the main backend workflow:
- * JSON upload → device parsing → CVE lookup → mitigation generation.
+ * ScanController.js
+ * -----------------
+ * Handles uploaded Nmap scan JSON and processes devices and vulnerabilities.
  */
 
-const deviceModel = require("../Models/deviceModel");
-const vulnerabilityModel = require("../Models/vulnerabilityModel");
+const Device = require("../Models/device");
+const Vulnerability = require("../Models/vulnerability");
 const nvdService = require("../Services/nvdService");
-const llmService = require("../Services/llmService");
 
 /**
- * Handles uploaded Nmap scan JSON from frontend.
- * @param {Request} req - HTTP request containing scan JSON
- * @param {Response} res - HTTP response
+ * Processes uploaded Nmap scan JSON.
+ * Converts devices, queries CVEs, and returns results.
+ * @param {Request} req
+ * @param {Response} res
  */
 exports.uploadScan = async (req, res) => {
   try {
     const scanData = req.body;
 
-    deviceModel.clearDevices();
-    vulnerabilityModel.clearVulnerabilities();
-
-    deviceModel.addDevices(scanData);
-    const devices = deviceModel.getAllDevices();
+    // Convert raw JSON into Device objects
+    const devices = scanData.map(d => new Device(d));
+    const vulnerabilities = [];
 
     for (const device of devices) {
       const cpes = device.getCPEs();
@@ -32,34 +29,23 @@ exports.uploadScan = async (req, res) => {
         const cves = await nvdService.fetchCVEs(cpe);
 
         for (const cve of cves) {
-          vulnerabilityModel.addVulnerability({
-            ...cve,
-            deviceIp: device.ipAddress
-          });
+          vulnerabilities.push(
+            new Vulnerability({
+              ...cve,
+              deviceIp: device.ipAddress
+            })
+          );
         }
       }
     }
 
-    const vulnerabilities = vulnerabilityModel.getAllVulnerabilities();
-    const mitigations = await llmService.createMitigationSteps(vulnerabilities);
-
     res.json({
       devices,
-      vulnerabilities,
-      mitigations
+      vulnerabilities
     });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to process scan" });
   }
-};
-
-/**
- * Returns all stored devices.
- * @param {Request} req
- * @param {Response} res
- */
-exports.getDevices = (req, res) => {
-  res.json(deviceModel.getAllDevices());
 };

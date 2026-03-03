@@ -1,104 +1,100 @@
-IoTriage Backend Flowchart (Chronological)
+Backend Architecture:
 
-[Frontend React UI: User Action]
+[Frontend React UI]
         |
-        | User uploads Nmap scan JSON
+        | -- 1) Upload Nmap scan JSON -->
         | POST /api/upload
         v
-[Routes Layer: scanRoutes.js]
+[Routes/ScanRoutes.js]
         |
-        | Maps URLs to controller methods:
-        | - POST /api/upload   -> scanController.uploadScan()
-        | - GET /api/devices   -> scanController.getDevices()
-        | - GET /api/results   -> cveController.getVulnerabilities()
+        | Maps URL → scanController.uploadScan()
         v
-[Scan Controller: scanController.js]
+[Controllers/ScanController.js]
         |
-        | Methods:
-        | - uploadScan(req, res)
-        |     -> clears previous data (deviceModel.clearDevices, vulnerabilityModel.clearVulnerabilities)
-        |     -> adds Device objects (deviceModel.addDevices)
-        |     -> iterates each Device:
-        |           - getCPEs() from device
-        |           - fetch CVEs via nvdService.fetchCVEs(cpe)
-        |           - store CVEs in VulnerabilityModel.addVulnerability()
-        |     -> call llmService.createMitigationSteps()
-        |     -> respond with JSON { devices, vulnerabilities, mitigations }
-        | - getDevices(req, res)
-        |     -> return all Device objects in memory
+        | - Converts raw JSON → Device objects
+        | - For each device, extracts CPEs (device.getCPEs())
+        | - For each CPE, fetch CVEs via nvdService.fetchCVEs(cpe)
+        | - Create Vulnerability objects
+        | - Returns JSON response:
+        |   {
+        |     devices: [...],
+        |     vulnerabilities: [...]
+        |   }
         v
-[Device Model: deviceModel.js]
+[Services/NvdService.js]
         |
-        | Classes & Methods:
-        | - Device
-        |     - constructor(raw JSON)
-        |     - getCPEs() -> returns array of CPE strings
-        | - DeviceModel
-        |     - addDevice(deviceData)
-        |     - addDevices(array)
-        |     - getAllDevices()
-        |     - clearDevices()
+        | Placeholder logic:
+        | - Receives CPE
+        | - Returns CVE array (id, description, severity)
         v
-[NVD Service: nvdService.js]
-        |
-        | Methods:
-        | - fetchCVEs(cpe) -> returns array of CVE objects
-        v
-[Vulnerability Model: vulnerabilityModel.js]
-        |
-        | Classes & Methods:
-        | - Vulnerability
-        |     - constructor({cveId, description, severity, deviceIp})
-        | - VulnerabilityModel
-        |     - addVulnerability(vulnData)
-        |     - getAllVulnerabilities()
-        |     - clearVulnerabilities()
-        v
-[LLM Service: llmService.js]
-        |
-        | Methods:
-        | - summarizeCVE(cveData) -> plain-English explanation
-        | - createMitigationSteps(vulnerabilities) -> actionable steps
-        v
-[Frontend React UI: Display Results]
+[Frontend React UI]
         |
         | Receives JSON response:
-        | {
-        |   "devices": [...],
-        |   "vulnerabilities": [...],
-        |   "mitigations": [...]
-        | }
-        | Renders cards, tables, and mitigation steps
+        | - Renders devices table/cards
+        | - Renders vulnerabilities table/cards
+        |
+        | -- 2) Chat/AI interaction -->
+        | POST /api/chat
+        v
+[Routes/ChatRoutes.js]
+        |
+        | Maps URL → chatController.sendMessage()
+        v
+[Controllers/ChatController.js]
+        |
+        | - Receives chatHistory and new user message
+        | - Calls llmService.sendChatToLLM(chatHistory, message)
+        | - Returns AI response JSON
+        v
+[Services/LlmService.js]
+        |
+        | Placeholder LLM integration:
+        | - Receives chat context & new message
+        | - Returns AI-generated response string
+        v
+[Frontend React UI]
+        |
+        | Displays AI response to user in chat interface
+
 
 
 
 Chronological Steps (Step-by-Step)
 
-1. User uploads JSON scan → frontend sends POST /api/upload.
+1. User uploads Nmap scan JSON from the frontend.
 
-2. Routes layer maps /api/upload → scanController.uploadScan().
+2. Frontend sends POST /api/upload with the scan JSON.
 
-3. scanController.uploadScan:
-   - Clears all previous devices and vulnerabilities.
-   - Adds new Device objects using deviceModel.addDevices().
-   - Iterates through devices:
-       * Calls device.getCPEs() to extract CPE strings.
-       * Calls nvdService.fetchCVEs(cpe) to get CVEs.
-       * Stores each CVE in vulnerabilityModel.addVulnerability().
-   - Calls llmService.createMitigationSteps() to produce human-readable guidance.
+3. ScanRoutes.js maps the request to scanController.uploadScan().
 
-4. scanController.uploadScan responds to frontend with JSON:
-   {
-     "devices": [...],
-     "vulnerabilities": [...],
-     "mitigations": [...]
-   }
+4. scanController.uploadScan():
+   - Converts raw JSON → Device objects.
+   - For each device:
+       - Calls device.getCPEs() to extract CPE strings.
+       - Queries NVD via nvdService.fetchCVEs(cpe) to get CVEs.
+       - Creates Vulnerability objects for each CVE.
+   - Returns JSON:
+     {
+       "devices": [...],
+       "vulnerabilities": [...]
+     }
 
-5. Frontend displays all data:
-   - Devices → table/cards
-   - Vulnerabilities → table/cards
-   - Mitigation steps → instructions for user
+5. Frontend receives JSON and renders:
+   - Devices table/cards.
+   - Vulnerabilities table/cards.
 
-6. User can later call:
-   - GET /api/devices → retrieves all Device objects in memory
-   - GET /api/results → retrieves all Vulnerabilities in memory
+6. User sends a chat message (e.g., "What should I do about CVE-2023-1234?").
+
+7. Frontend sends POST /api/chat with:
+   - chatHistory (full local conversation)
+   - message (new user input)
+
+8. ChatRoutes.js maps the request to chatController.sendMessage().
+
+9. chatController.sendMessage():
+   - Calls llmService.sendChatToLLM(chatHistory, message)
+   - Receives AI-generated response
+   - Returns JSON:
+     { "reply": "AI response" }
+
+10. Frontend receives AI response and displays it in the chat interface.

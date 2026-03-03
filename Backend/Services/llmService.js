@@ -1,28 +1,23 @@
 /**
  * llmService.js
- * --------------
- * Handles interaction with an LLM 
- * Used to convert technical CVE data into plain English explanations
- * and generate mitigation advice for users.
+ * -------------
+ * Handles interaction with the Large Language Model (LLM).
+ * Receives full chat context and new user message, and returns an AI response.
  */
 
-/**
- * Converts a CVE into a plain-English summary.
- * @param {Object} cveData - Vulnerability data
- * @returns {string}
- */
-exports.summarizeCVE = async (cveData) => {
-  return `Plain English explanation of ${cveData.cveId}`;
-};
+const axios = require("axios");
 
 /**
- * Generates mitigation steps for a list of vulnerabilities.
- * @param {Array<Object>} vulnerabilities
- * @returns {Array<Object>} Mitigation instructions
+ * Sends chat history and new user query to the LLM.
+ * @param {Array<Object>} chatHistory - Full conversation history
+ * @param {string} userMessage - New user message
+ * @returns {Promise<string>} AI-generated response
  */
-exports.createMitigationSteps = async (vulnerabilities) => {
-  return vulnerabilities.map(v => ({
-    cveId: v.cveId,
-    mitigation: "Update the affected software and apply patches."
-  }));
+exports.sendChatToLLM = async (chatHistory, userMessage) => {
+  // TODO: Replace with actual LLM provider API call (OpenAI, Claude, etc.)
+
+  console.log("Sending context to LLM:", chatHistory);
+  console.log("New message:", userMessage);
+
+  return "This is a placeholder AI response based on your scan data.";
 };
