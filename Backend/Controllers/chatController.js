@@ -1,7 +1,8 @@
 /**
  * chatController.js
  * -----------------
- * Handles chat requests from the frontend and forwards them to the LLM.
+ * Handles AI chat requests from the frontend after frontend gets first json batch 
+ * and forwards them to the LLM.
  */
 
 const llmService = require("../Services/llmService");

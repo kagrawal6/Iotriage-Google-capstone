@@ -41,6 +41,8 @@ exports.uploadScan = async (req, res) => {
       }
     }
 
+    //TODO: Rank vulnerabilities
+
     // Generate mitigation steps using LLM service
     const mitigations = await llmService.createMitigationSteps(vulnerabilities);
 
