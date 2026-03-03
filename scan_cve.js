@@ -46,12 +46,14 @@ async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
     url.searchParams.set("cpeName", cpeName);
     url.searchParams.set("resultsPerPage", String(resultsPerPage));
     url.searchParams.set("startIndex", String(startIndex));
-    if (apiKey) url.searchParams.set("apiKey", apiKey);
+    // if (apiKey) url.searchParams.set("apiKey", apiKey);
 
     const resp = await fetch(url.toString(), {
       method: "GET",
-      headers: { "accept": "application/json" }
+      headers: { "accept": "application/json", "apiKey": apiKey ?? "" }
     });
+
+
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => "");
