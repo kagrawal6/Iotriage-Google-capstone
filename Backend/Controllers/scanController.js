@@ -1,5 +1,5 @@
 /**
- * ScanController.js
+ * scanController.js
  * -----------------
  * Handles uploaded Nmap scan JSON and processes devices and vulnerabilities.
  */

@@ -1,5 +1,5 @@
 /**
- * Device.js
+ * device.js
  * ----------
  * Represents a network device parsed from an Nmap scan.
  * Provides helper methods for extracting vulnerability identifiers (CPEs).

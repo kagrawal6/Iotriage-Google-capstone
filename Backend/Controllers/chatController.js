@@ -1,5 +1,5 @@
 /**
- * ChatController.js
+ * chatController.js
  * -----------------
  * Handles chat requests from the frontend and forwards them to the LLM.
  */
