@@ -1,64 +1,65 @@
 /**
  * scanController.js
- *
- * Handles all logic related to network scanning and device discovery.
- *
- * Responsibilities:
- * - Trigger the Python + Nmap scanner
- * - Parse scan output (JSON)
- * - Extract device information (IP, vendor, product, version, ports)
- * - Store devices using the device model
- * - Return discovered devices to the frontend
- *
- * This controller does NOT:
- * - Query vulnerability databases
- * - Call AI/LLMs
- * - Process CVE data
- *
+ * ------------------
+ * Handles uploaded scan files and controls the main backend workflow:
+ * JSON upload → device parsing → CVE lookup → mitigation generation.
  */
 
-const { exec } = require("child_process");
 const deviceModel = require("../Models/deviceModel");
+const vulnerabilityModel = require("../Models/vulnerabilityModel");
+const nvdService = require("../Services/nvdService");
+const llmService = require("../Services/llmService");
 
-// Run the Python Nmap scanner
-exports.runScan = async (req, res) => {
-  // Clear previous scan data
-  deviceModel.clearDevices();
+/**
+ * Handles uploaded Nmap scan JSON from frontend.
+ * @param {Request} req - HTTP request containing scan JSON
+ * @param {Response} res - HTTP response
+ */
+exports.uploadScan = async (req, res) => {
+  try {
+    const scanData = req.body;
 
-  // Example: call Python script that runs nmap
-  exec("python scanner.py", (error, stdout, stderr) => {
-    if (error) {
-      return res.status(500).json({ error: "Scan failed" });
+    deviceModel.clearDevices();
+    vulnerabilityModel.clearVulnerabilities();
+
+    deviceModel.addDevices(scanData);
+    const devices = deviceModel.getAllDevices();
+
+    for (const device of devices) {
+      const cpes = device.getCPEs();
+
+      for (const cpe of cpes) {
+        const cves = await nvdService.fetchCVEs(cpe);
+
+        for (const cve of cves) {
+          vulnerabilityModel.addVulnerability({
+            ...cve,
+            deviceIp: device.ipAddress
+          });
+        }
+      }
     }
 
-    // Parse JSON output from Python
-    const rawData = JSON.parse(stdout);
+    const vulnerabilities = vulnerabilityModel.getAllVulnerabilities();
+    const mitigations = await llmService.createMitigationSteps(vulnerabilities);
 
-    // Convert raw scan output into device objects
-    const devices = exports.parseScanOutput(rawData);
+    res.json({
+      devices,
+      vulnerabilities,
+      mitigations
+    });
 
-    // Save devices
-    deviceModel.saveDevices(devices);
-
-    // Return devices to frontend
-    res.json(devices);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to process scan" });
+  }
 };
 
-// Convert Nmap JSON into clean device objects
-exports.parseScanOutput = (rawJson) => {
-  // TODO: parse nmap output into device objects
-  return rawJson.map(d => ({
-    ip: d.ip,
-    vendor: d.vendor,
-    product: d.product,
-    version: d.version,
-    ports: d.ports
-  }));
-};
-
-// Return stored devices
+/**
+ * Returns all stored devices.
+ * @param {Request} req
+ * @param {Response} res
+ */
 exports.getDevices = (req, res) => {
-  const devices = deviceModel.getAllDevices();
-  res.json(devices);
+  res.json(deviceModel.getAllDevices());
 };

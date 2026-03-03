@@ -1,60 +1,64 @@
-Backend Architecture:
+IoTriage Backend Flowchart (Chronological)
 
-
-IoTriage Backend Flowchart (Chronological with Frontend at Top & Bottom)
 [Frontend React UI: User Action]
         |
-        | User clicks "Scan"
-        | POST /api/scan
+        | User uploads Nmap scan JSON
+        | POST /api/upload
         v
 [Routes Layer: scanRoutes.js]
         |
-        | Maps URLs → controller methods:
-        | - POST /api/scan       -> scanController.runScan()
-        | - GET  /api/devices    -> scanController.getDevices()
-        | - GET  /api/results    -> cveController.getVulnerabilities() 
+        | Maps URLs to controller methods:
+        | - POST /api/upload   -> scanController.uploadScan()
+        | - GET /api/devices   -> scanController.getDevices()
+        | - GET /api/results   -> cveController.getVulnerabilities()
         v
 [Scan Controller: scanController.js]
         |
         | Methods:
-        | - runScan()             -> triggers Python + Nmap scanner
-        |                           -> converts output to device objects
-        |                           -> queries NVD API for each device CPE
-        |                           -> stores devices + vulnerabilities
-        |                           -> calls LLM to generate mitigation steps
-        | - parseScanOutput()     -> helper: converts scanner JSON → device objects
-        | - getDevices()          -> retrieves stored devices
-        v
-[Python + Nmap Scanner]
-        |
-        | Methods:
-        | - scanNetwork()         -> discovers IPs, ports, services, OS
-        | - saveJSON()            -> outputs JSON for backend
+        | - uploadScan(req, res)
+        |     -> clears previous data (deviceModel.clearDevices, vulnerabilityModel.clearVulnerabilities)
+        |     -> adds Device objects (deviceModel.addDevices)
+        |     -> iterates each Device:
+        |           - getCPEs() from device
+        |           - fetch CVEs via nvdService.fetchCVEs(cpe)
+        |           - store CVEs in VulnerabilityModel.addVulnerability()
+        |     -> call llmService.createMitigationSteps()
+        |     -> respond with JSON { devices, vulnerabilities, mitigations }
+        | - getDevices(req, res)
+        |     -> return all Device objects in memory
         v
 [Device Model: deviceModel.js]
         |
-        | Methods:
-        | - addDevice(device)     -> store a device
-        | - getAllDevices()       -> retrieve all devices
-        | - clearDevices()        -> remove all devices
+        | Classes & Methods:
+        | - Device
+        |     - constructor(raw JSON)
+        |     - getCPEs() -> returns array of CPE strings
+        | - DeviceModel
+        |     - addDevice(deviceData)
+        |     - addDevices(array)
+        |     - getAllDevices()
+        |     - clearDevices()
         v
-[NVD API]
+[NVD Service: nvdService.js]
         |
         | Methods:
-        | - fetchCVEs(cpe)        -> return potential vulnerabilities for device
+        | - fetchCVEs(cpe) -> returns array of CVE objects
         v
 [Vulnerability Model: vulnerabilityModel.js]
         |
-        | Methods:
-        | - addVulnerability(vuln) -> store a CVE
-        | - getAllVulnerabilities() -> retrieve CVEs
-        | - clearVulnerabilities()  -> remove CVEs
+        | Classes & Methods:
+        | - Vulnerability
+        |     - constructor({cveId, description, severity, deviceIp})
+        | - VulnerabilityModel
+        |     - addVulnerability(vulnData)
+        |     - getAllVulnerabilities()
+        |     - clearVulnerabilities()
         v
-[LLM Integration]
+[LLM Service: llmService.js]
         |
         | Methods:
         | - summarizeCVE(cveData) -> plain-English explanation
-        | - createMitigationSteps() -> actionable advice for user
+        | - createMitigationSteps(vulnerabilities) -> actionable steps
         v
 [Frontend React UI: Display Results]
         |
@@ -67,22 +71,34 @@ IoTriage Backend Flowchart (Chronological with Frontend at Top & Bottom)
         | Renders cards, tables, and mitigation steps
 
 
+
 Chronological Steps (Step-by-Step)
 
-1. User clicks "Scan" → frontend sends POST /api/scan.
-2. Routes layer (scanRoutes.js) maps /api/scan → scanController.runScan()
-3. scanController.runScan():
-       - Runs Python + Nmap scanner → scanNetwork() → JSON output.
-       - parseScanOutput() converts JSON → device objects.
-       - Stores devices → deviceModel.addDevice().
-4. For each device:
-       - Convert device → CPE string.
-       - Query NVD API → fetch potential CVEs.
-       - Store CVEs → vulnerabilityModel.addVulnerability().
-5. LLM Integration:
-       - summarizeCVE() → produces plain-English explanation.
-       - createMitigationSteps() → actionable steps for user.
-6. scanController.runScan() returns a single JSON response with devices, vulnerabilities, and mitigation steps.
-7. Frontend React UI receives JSON → renders cards, tables, and explanations for the user.
+1. User uploads JSON scan → frontend sends POST /api/upload.
 
+2. Routes layer maps /api/upload → scanController.uploadScan().
 
+3. scanController.uploadScan:
+   - Clears all previous devices and vulnerabilities.
+   - Adds new Device objects using deviceModel.addDevices().
+   - Iterates through devices:
+       * Calls device.getCPEs() to extract CPE strings.
+       * Calls nvdService.fetchCVEs(cpe) to get CVEs.
+       * Stores each CVE in vulnerabilityModel.addVulnerability().
+   - Calls llmService.createMitigationSteps() to produce human-readable guidance.
+
+4. scanController.uploadScan responds to frontend with JSON:
+   {
+     "devices": [...],
+     "vulnerabilities": [...],
+     "mitigations": [...]
+   }
+
+5. Frontend displays all data:
+   - Devices → table/cards
+   - Vulnerabilities → table/cards
+   - Mitigation steps → instructions for user
+
+6. User can later call:
+   - GET /api/devices → retrieves all Device objects in memory
+   - GET /api/results → retrieves all Vulnerabilities in memory

@@ -1,29 +1,27 @@
 /**
  * app.js
- *
+ * -------
  * Entry point for the backend server.
- *
- * Responsibilities:
- * - Create and configure the Express application
- * - Register API routes
- * - Enable middleware (JSON parsing, etc.)
- * - Start the HTTP server and listen for requests
- *
- * This file does NOT contain business logic.
- * It only wires the system together.
- * 
+ * Initializes Express and loads API routes.
  */
-require('dotenv').config();
+
 const express = require("express");
+const app = express();
 const scanRoutes = require("./Routes/scanRoutes");
 
-const app = express();
-app.use(express.json()); // allow JSON body parsing
+/**
+ * Enables JSON request parsing.
+ */
+app.use(express.json());
 
-// Register routes
+/**
+ * Registers API routes under /api.
+ */
 app.use("/api", scanRoutes);
 
-// Start server
+/**
+ * Starts the server.
+ */
 app.listen(3000, () => {
-  console.log("Backend running on http://localhost:3000");
+  console.log("Server running on port 3000");
 });
