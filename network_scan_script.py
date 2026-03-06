@@ -1,6 +1,7 @@
 import nmap
 import socket
 import json
+from cpe import CPE
 
 def get_local_ip():
     """
@@ -21,7 +22,34 @@ def get_local_ip():
     except Exception as e:
         print(f"Error getting local IP: {e}")
         return None
+
+def convert_cpe_list_version(cpe_input):
+    """
+    Converts a CPE 2.2 string to CPE 2.3 for easier search using NVD database.
+    """
+    # 1. Handle empty inputs
+    if not cpe_input:
+        return []
+
+    # 2. Force input into a list if nmap returns a single string
+    if isinstance(cpe_input, str):
+        cpe_input = [cpe_input]
+
+    converted_cpes = []
     
+    # 3. Safely parse each CPE
+    for cpe in cpe_input:
+        try:
+            cpe_obj = CPE(cpe, CPE.VERSION_2_2)
+            converted_cpes.append(cpe_obj.as_fs())
+        except Exception as e:
+            # If nmap gives a malformed CPE, log it and keep the original string
+            print(f"  [!] Warning: Could not convert malformed CPE '{cpe}': {e}")
+            converted_cpes.append(cpe)
+
+    # 4. Return the new list so the JSON dictionary can store it
+    return converted_cpes
+
 def scan_network(scanner, target_network):
     """
     Scans the given target network using nmap with flags for OS and version detection.
@@ -78,7 +106,7 @@ def parse_scan_to_json(scanner, output_filename="scan_results.json"):
                 device_info['os_matches'].append({
                     "name": os['name'],
                     "accuracy": os['accuracy'],
-                    "cpe": cpe_list
+                    "cpe": convert_cpe_list_version(cpe_list)
                 })
 
         # 5. Extract Open Ports, Services, and Service CPEs
@@ -94,7 +122,7 @@ def parse_scan_to_json(scanner, output_filename="scan_results.json"):
                         "service": port_data.get('name', 'Unknown'),
                         "product": port_data.get('product', 'Unknown'),
                         "version": port_data.get('version', 'Unknown'),
-                        "cpe": port_data.get('cpe', 'None')
+                        "cpe": convert_cpe_list_version(port_data.get('cpe', []))
                     })
 
         extracted_data.append(device_info)
