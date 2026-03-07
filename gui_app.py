@@ -4,7 +4,6 @@ import threading
 import sys
 import ctypes
 import os
-import nmap
 
 # Ensure scanner.py is always found from this file's directory,
 # even when relaunched as Administrator with a different working directory
@@ -12,7 +11,7 @@ _this_dir = os.path.dirname(os.path.abspath(__file__))
 if _this_dir not in sys.path:
     sys.path.insert(0, _this_dir)
 
-import script as scanner_logic
+import network_scan_script as scanner_logic
 
 
 def is_admin():
