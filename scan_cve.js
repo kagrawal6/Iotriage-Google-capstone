@@ -64,15 +64,11 @@ async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
     const vulns = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
 
     for (const v of vulns) {
-      const cve = v?.cve || {};
+      const cve = v?.cve || {}; // access v if it is not null/undefined else empty object
       const cveId = cve.id || null;
 
       // description 
-      const descArr = Array.isArray(cve.descriptions) ? cve.descriptions : [];
-      const description =
-        descArr.find(d => d?.lang === "en")?.value ??
-        descArr[0]?.value ??
-        null;
+      const description = cve.descriptions.find(d => d.lang === "en")?.value || cve.descriptions[0]?.value;
 
       const { score, severity, version } = extractCvss(cve.metrics || {});
 
@@ -85,7 +81,11 @@ async function getCvesByCpe(cpeName, { apiKey = null, maxToReturn = 25 } = {}) {
       });
 
       if (collected.length >= maxToReturn) break;
+
+    // collected.push(v?.descriptions||null);
     }
+
+    
 
     const total = Number(data.totalResults || 0);
     startIndex += vulns.length;
