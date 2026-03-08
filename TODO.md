@@ -6,5 +6,5 @@
 - **No environment variables** — No `.env` file exists; will need `NVD_API_KEY` and `GEMINI_API_KEY` when real services are connected.
 - **Vulnerability ranking not implemented** — `Backend/Controllers/scanController.js` has a `//TODO: Rank vulnerabilities` placeholder.
 - **Scanner EXE not built** — Download button on homepage is disabled; `gui_app.py` exists on `script_gui_wrapper` branch but no packaged `.exe` yet.
-- **Chat history not persisted** — Stored in React state only; resets on page refresh (could add `localStorage`).
-- **Nmap not in system PATH** — Installed at `C:\Program Files (x86)\Nmap` but not added to PATH; scanner works via the Python venv workaround.
+- **Chat history not persisted** — Stored in React state only; resets on page refresh (could add `localStorage`). (Oscar mentioned this is okay, but still kept it as a pointer for later discussion)
+
