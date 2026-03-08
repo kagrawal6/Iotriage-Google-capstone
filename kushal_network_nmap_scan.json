@@ -1,0 +1,386 @@
+[
+    {
+        "ip_address": "192.168.0.1",
+        "mac_address": "24:2F:D0:28:F3:67",
+        "device_name": "Unknown",
+        "device_type": "general purpose",
+        "os_matches": [
+            {
+                "name": "Linux 2.6.23 - 2.6.38",
+                "accuracy": "100",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:2.6:*:*:*:*:*:*:*"
+                ]
+            }
+        ],
+        "open_ports": [
+            {
+                "port": 22,
+                "protocol": "tcp",
+                "service": "ssh",
+                "product": "Dropbear sshd",
+                "version": "2020.80",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 53,
+                "protocol": "tcp",
+                "service": "domain",
+                "product": "ISC BIND",
+                "version": "9.18.28-1~deb12u2",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 80,
+                "protocol": "tcp",
+                "service": "http",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 1900,
+                "protocol": "tcp",
+                "service": "upnp",
+                "product": "Portable SDK for UPnP devices",
+                "version": "1.6.19",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:2.6.36:*:*:*:*:*:*:*"
+                ]
+            }
+        ]
+    },
+    {
+        "ip_address": "192.168.0.110",
+        "mac_address": "9E:F6:07:D9:5A:A7",
+        "device_name": "Unknown",
+        "device_type": "general purpose",
+        "os_matches": [
+            {
+                "name": "FreeBSD 6.2-RELEASE",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:freebsd:freebsd:6.2:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple OS X 10.8 (Mountain Lion) - 10.9 (Mavericks) or iOS 5.0.1 - 5.1.1 (Darwin 11.0.0 - 13.2.0)",
+                "accuracy": "88",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:5:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple iOS 4.1 - 4.2.1",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:4:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple iOS 4.3.1 - 4.3.5",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:4:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple OS X 10.10 (Yosemite) or iOS 8.3 - 9.0.1 (Darwin 14.0.0 - 15.0.0)",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:8:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple iPhone OS 3.1.2 - iOS 4.2.1",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:3:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.5.5 (Leopard) - 10.6.6 (Snow Leopard) (Darwin 9.5.0 - 10.6.0)",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.5:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.5.8 (Leopard) (Darwin 9.8.0)",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.5.8:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.6.7 (Snow Leopard) (Darwin 10.7.0)",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.6.7:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple iPod touch audio player (iPhone OS 1.1.2 - 1.1.4, Darwin 9.0.0d1)",
+                "accuracy": "87",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:1:*:*:*:*:*:*:*"
+                ]
+            }
+        ],
+        "open_ports": [
+            {
+                "port": 4000,
+                "protocol": "tcp",
+                "service": "nomachine-nx",
+                "product": "NoMachine NX Server remote desktop",
+                "version": "9.3.7",
+                "cpe": [
+                    "cpe:2.3:a:nomachine:nx_server:9.3.7:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 5000,
+                "protocol": "tcp",
+                "service": "rtsp",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 7000,
+                "protocol": "tcp",
+                "service": "rtsp",
+                "product": "",
+                "version": "",
+                "cpe": []
+            }
+        ]
+    },
+    {
+        "ip_address": "192.168.0.111",
+        "mac_address": "Unknown",
+        "device_name": "Unknown",
+        "device_type": "general purpose",
+        "os_matches": [
+            {
+                "name": "Microsoft Windows 10 1607",
+                "accuracy": "99",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:1607:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 10 1511",
+                "accuracy": "95",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:1511:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 10 1703",
+                "accuracy": "95",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:1703:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows Server 2008 SP2",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_server_2008:*:sp2:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 7 or 8.1 R1",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_7:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 8",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_8:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 10 10586 - 14393",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 10 1507",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:1507:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows 10 1507 - 1607",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_10:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Microsoft Windows Vista SP1 - SP2, Windows Server 2008 SP2, or Windows 7",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows_vista:*:sp1:*:*:*:*:*:*",
+                    "cpe:2.3:o:microsoft:windows_vista:*:sp2:*:*:*:*:*:*"
+                ]
+            }
+        ],
+        "open_ports": [
+            {
+                "port": 135,
+                "protocol": "tcp",
+                "service": "msrpc",
+                "product": "Microsoft Windows RPC",
+                "version": "",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 139,
+                "protocol": "tcp",
+                "service": "netbios-ssn",
+                "product": "Microsoft Windows netbios-ssn",
+                "version": "",
+                "cpe": [
+                    "cpe:2.3:o:microsoft:windows:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 445,
+                "protocol": "tcp",
+                "service": "microsoft-ds",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 1309,
+                "protocol": "tcp",
+                "service": "tcpwrapped",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 3000,
+                "protocol": "tcp",
+                "service": "http",
+                "product": "Node.js Express framework",
+                "version": "",
+                "cpe": [
+                    "cpe:2.3:a:nodejs:node.js:*:*:*:*:*:*:*:*"
+                ]
+            }
+        ]
+    },
+    {
+        "ip_address": "192.168.0.119",
+        "mac_address": "A8:FE:9D:DB:D6:8E",
+        "device_name": "Unknown",
+        "device_type": "media device",
+        "os_matches": [
+            {
+                "name": "Apple iPod touch audio player (iPhone OS 2.2)",
+                "accuracy": "97",
+                "cpe": [
+                    "cpe:2.3:o:apple:iphone_os:2.2:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Scientific Atlanta WebSTAR EPC2203 cable modem",
+                "accuracy": "95",
+                "cpe": [
+                    "cpe:2.3:h:scientificatlanta:webstar_epc2203:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.4.10 (Tiger) (Darwin 8.10.0, PowerPC)",
+                "accuracy": "95",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.4.10:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.3.9 (Panther) (Darwin 7.9.0, PowerPC)",
+                "accuracy": "93",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.3.9:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "FreeBSD 5.4-STABLE",
+                "accuracy": "92",
+                "cpe": [
+                    "cpe:2.3:o:freebsd:freebsd:5.4:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.3.9 (Panther) - 10.4.7 (Tiger) (Darwin 7.9.0 - 8.7.8, PowerPC)",
+                "accuracy": "90",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.3:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "IBM AIX 5.3",
+                "accuracy": "90",
+                "cpe": [
+                    "cpe:2.3:o:ibm:aix:5.3:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Apple Mac OS X 10.4.11 (Tiger) (Darwin 8.11.0, PowerPC)",
+                "accuracy": "90",
+                "cpe": [
+                    "cpe:2.3:o:apple:mac_os_x:10.4.11:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "Brother DCP-L2540DN printer",
+                "accuracy": "90",
+                "cpe": [
+                    "cpe:2.3:h:brother:dcp-l2540dn:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "name": "IBM AIX 7.2",
+                "accuracy": "90",
+                "cpe": [
+                    "cpe:2.3:o:ibm:aix:7.2:*:*:*:*:*:*:*"
+                ]
+            }
+        ],
+        "open_ports": [
+            {
+                "port": 49152,
+                "protocol": "tcp",
+                "service": "tcpwrapped",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 62078,
+                "protocol": "tcp",
+                "service": "tcpwrapped",
+                "product": "",
+                "version": "",
+                "cpe": []
+            }
+        ]
+    }
+]

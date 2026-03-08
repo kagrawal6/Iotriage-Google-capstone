@@ -1,0 +1,5 @@
+node_modules/
+scanner_env/
+scan_results.json
+sample_scan_results.json
+.env
