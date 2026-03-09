@@ -6,14 +6,21 @@
  */
 
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const scanRoutes = require("./Routes/scanRoutes");
 const chatRoutes = require("./Routes/chatRoutes");
 
 /**
- * Enables JSON request body parsing.
+ * Enables CORS so the frontend (Vite dev server) can reach the API.
  */
-app.use(express.json());
+app.use(cors());
+
+/**
+ * Enables JSON request body parsing.
+ * Limit raised to 10mb to handle large Nmap scan files.
+ */
+app.use(express.json({ limit: "10mb" }));
 
 /**
  * Registers API routes.
