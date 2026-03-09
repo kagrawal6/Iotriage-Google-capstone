@@ -15,9 +15,13 @@ const llmService = require("../Services/llmService");
  */
 exports.sendMessage = async (req, res) => {
   try {
-    const { chatHistory, message } = req.body;
+    const { chatHistory, message, scanContext } = req.body;
 
-    const aiResponse = await llmService.sendChatToLLM(chatHistory, message);
+    const aiResponse = await llmService.sendChatToLLM(
+      chatHistory,
+      message,
+      scanContext || null
+    );
 
     res.json({ reply: aiResponse });
 
