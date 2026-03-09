@@ -5,6 +5,7 @@
  * Configures middleware and registers API routes.
  */
 
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const scanRoutes = require("./Routes/scanRoutes");
