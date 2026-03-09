@@ -7,7 +7,7 @@
 
 const { describe, it } = require("node:test");
 const assert = require("node:assert");
-const { parseScanToDevices } = require("../Backend/Controllers/scanController");
+const { parseScanToDevices } = require("../Controllers/scanController");
 
 /** Tests for converting scan_results.json array into Device instances. */
 describe("parseScanToDevices (scan_results.json → Device objects)", () => {

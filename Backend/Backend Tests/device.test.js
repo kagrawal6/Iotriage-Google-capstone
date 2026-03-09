@@ -7,7 +7,7 @@
 
 const { describe, it } = require("node:test");
 const assert = require("node:assert");
-const Device = require("../Backend/Models/device");
+const Device = require("../Models/device");
 
 /** Tests for the Device model built from network_scan_script.py scan output. */
 describe("Device (from network_scan_script.py output)", () => {
