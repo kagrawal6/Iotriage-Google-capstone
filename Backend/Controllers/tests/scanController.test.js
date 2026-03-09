@@ -1,4 +1,4 @@
-const {uploadScan} = require("../ScanController");
+const {uploadScan} = require("../scanController");
 const Device = require("../../Models/device");
 const Vulnerability = require("../../Models/vulnerability");
 const nvdService = require("../../Services/nvdService");
