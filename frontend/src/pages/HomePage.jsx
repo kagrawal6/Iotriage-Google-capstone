@@ -5,11 +5,11 @@ import { Link } from "react-router-dom";
  */
 export default function HomePage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-10 bg-white/95 rounded-xl shadow-sm mt-6">
       <h1 className="text-2xl font-bold mb-2">IoTriage</h1>
       <p className="text-gray-600 mb-8">
-        Scan your local network for IoT devices, identify known vulnerabilities
-        (CVEs), and get AI-powered remediation guidance.
+        Scan your home network for smart devices, see which ones could be at
+        risk, and get guidance on how to mitigate security vulnerabilities.
       </p>
 
       <hr className="my-6 border-gray-200" />
@@ -18,9 +18,9 @@ export default function HomePage() {
       <h2 className="text-lg font-bold mb-4">How It Works</h2>
       <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 mb-8">
         <li>
-          <strong>Scan your network</strong> — Run the IoTriage scanner (requires
-          Nmap) on your local machine. It discovers devices, open ports,
-          services, and OS info on your subnet.
+          <strong>Scan your Wi‑Fi</strong> — Run the IoTriage scanner on your
+          computer. It looks at your Wi‑Fi network and finds the devices
+          connected to it (for example: router, laptop, phone, smart camera).
         </li>
         <li>
           <strong>Upload results</strong> — Upload the generated{" "}
@@ -28,13 +28,14 @@ export default function HomePage() {
           <Link to="/upload" className="underline">
             Upload page
           </Link>
-          . The backend parses devices, extracts CPEs, and queries the NVD for
-          known CVEs.
+          . IoTriage turns that file into a list of devices and checks each one
+          for known vulnerabilities.
         </li>
         <li>
-          <strong>Review &amp; remediate</strong> — View vulnerabilities with
-          severity ratings and mitigation steps. Use the AI chat for deeper
-          guidance.
+          <strong>Review &amp; fix issues</strong> — You get a simple overview
+          of which devices may be risky, how serious each issue is, and clear
+          step‑by‑step suggestions on what to do. You can also chat with the AI
+          to ask questions in your own words.
         </li>
       </ol>
 
@@ -107,7 +108,7 @@ export default function HomePage() {
       <div className="text-center">
         <Link
           to="/upload"
-          className="inline-block border border-gray-400 hover:border-black text-black px-6 py-2 rounded text-sm font-medium"
+          className="inline-block bg-[#174ea6] hover:bg-[#185abc] text-white px-7 py-2.5 rounded-full text-base font-bold shadow-md"
         >
           Go to Upload
         </Link>

@@ -3,13 +3,21 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
-  background-color: #ffffff;
+  /* Google-inspired multi-color background */
+  background: linear-gradient(
+    135deg,
+    #0f9d58 0%,
+    #4285f4 33%,
+    #db4437 66%,
+    #f4b400 100%
+  );
+  background-attachment: fixed;
   color: #1a1a1a;
   min-height: 100vh;
 }
 
 a {
-  color: #2563eb;
+  color: #4285f4;
 }
 
 code {

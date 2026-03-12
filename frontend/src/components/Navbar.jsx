@@ -5,17 +5,20 @@ export default function Navbar() {
   const { scanResults } = useScan();
 
   const linkClass = ({ isActive }) =>
-    `px-3 py-1 text-sm ${
+    `px-3 py-1 text-sm rounded-full ${
       isActive
-        ? "font-bold underline"
-        : "text-gray-600 hover:text-black hover:underline"
+        ? "font-medium text-[#1a73e8] bg-[#e8f0fe]"
+        : "text-gray-700 hover:text-[#1a73e8] hover:bg-[#e8f0fe]"
     }`;
 
   return (
-    <nav className="border-b border-gray-300 bg-white sticky top-0 z-50">
+    <nav className="border-b border-gray-200 bg-white/95 backdrop-blur sticky top-0 z-50 shadow-sm">
       <div className="max-w-5xl mx-auto px-4">
-        <div className="flex items-center justify-between h-12">
-          <NavLink to="/" className="text-base font-bold text-black">
+        <div className="flex items-center justify-between h-14">
+          <NavLink
+            to="/"
+            className="text-base font-bold text-[#202124]"
+          >
             IoTriage
           </NavLink>
 

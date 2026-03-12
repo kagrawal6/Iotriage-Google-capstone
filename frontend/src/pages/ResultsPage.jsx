@@ -32,7 +32,7 @@ export default function ResultsPage() {
     }`;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-8 bg-white/95 rounded-xl shadow-sm mt-6">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -59,15 +59,15 @@ export default function ResultsPage() {
         </div>
         <div className="border border-gray-200 rounded p-3">
           <p className="text-2xl font-bold">{vulnerabilities.length}</p>
-          <p className="text-xs text-gray-500">Total CVEs</p>
+          <p className="text-xs text-gray-500">Total vulnerabilities</p>
         </div>
-        <div className="border border-gray-200 rounded p-3">
-          <p className="text-2xl font-bold">{criticalCount}</p>
-          <p className="text-xs text-gray-500">Critical</p>
+        <div className="border border-gray-200 rounded p-3 bg-[#fce8e6]">
+          <p className="text-2xl font-bold text-[#db4437]">{criticalCount}</p>
+          <p className="text-xs text-[#b31412]">Critical</p>
         </div>
-        <div className="border border-gray-200 rounded p-3">
-          <p className="text-2xl font-bold">{highCount}</p>
-          <p className="text-xs text-gray-500">High</p>
+        <div className="border border-gray-200 rounded p-3 bg-[#fef7e0]">
+          <p className="text-2xl font-bold text-[#ea4335]">{highCount}</p>
+          <p className="text-xs text-[#b06000]">High</p>
         </div>
       </div>
 

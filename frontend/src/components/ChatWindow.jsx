@@ -40,7 +40,7 @@ export default function ChatWindow() {
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white/80">
         {chatHistory.length === 0 && (
           <div className="text-center text-gray-400 py-10 text-sm">
             <p className="mb-1">Ask about your scan results.</p>
@@ -58,10 +58,10 @@ export default function ChatWindow() {
             }`}
           >
             <div
-              className={`max-w-[75%] rounded px-3 py-2 text-sm ${
+              className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
                 msg.role === "user"
-                  ? "bg-gray-100 text-black"
-                  : "border border-gray-200 text-gray-700"
+                  ? "bg-[#4285f4] text-white"
+                  : "border border-gray-200 bg-white text-gray-700"
               }`}
             >
               {msg.content}
@@ -81,7 +81,7 @@ export default function ChatWindow() {
       {/* Input */}
       <form
         onSubmit={handleSend}
-        className="border-t border-gray-200 p-3 flex gap-2"
+        className="border-t border-gray-200 p-3 flex gap-2 bg-white/95"
       >
         <input
           type="text"
@@ -93,12 +93,12 @@ export default function ChatWindow() {
               : "Upload a scan first"
           }
           disabled={!scanResults || isSending}
-          className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:border-black disabled:opacity-50"
+          className="flex-1 border border-gray-300 rounded-full px-3 py-2 text-sm focus:outline-none focus:border-[#4285f4] disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={!scanResults || !input.trim() || isSending}
-          className="border border-gray-400 hover:border-black disabled:opacity-40 disabled:cursor-not-allowed text-black px-4 py-2 rounded text-sm"
+          className="bg-[#4285f4] hover:bg-[#3367d6] disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2 rounded-full text-sm"
         >
           Send
         </button>
