@@ -156,6 +156,37 @@ function buildChatSystemInstruction(scanContext) {
   return instruction;
 }
 
+/**
+ * Normalizes chat history into Gemini's expected format:
+ * [{ role: "user"|"model", parts: [{ text: "..." }] }]
+ * Accepts frontend format ({ role, content }) for backward compatibility.
+ * @param {Array<Object>} chatHistory
+ * @returns {Array<Object>}
+ */
+function normalizeChatHistory(chatHistory) {
+  if (!Array.isArray(chatHistory)) return [];
+
+  return chatHistory
+    .map((msg) => {
+      const normalizedRole = msg.role === "assistant" ? "model" : msg.role;
+
+      if (!["user", "model"].includes(normalizedRole)) {
+        return null;
+      }
+
+      if (Array.isArray(msg.parts)) {
+        return { role: normalizedRole, parts: msg.parts };
+      }
+
+      if (typeof msg.content === "string") {
+        return { role: normalizedRole, parts: [{ text: msg.content }] };
+      }
+
+      return null;
+    })
+    .filter(Boolean);
+}
+
 // ── Exported functions ──────────────────────────────────────────────────────
 
 /**
@@ -179,7 +210,7 @@ exports.createMitigationSteps = async (vulnerabilities) => {
     // 1. Fetch CISA KEV data for grounding
     const kevMap = await getCisaKevMap();
 
-    // 2. Build prompt
+    // 2. Build prompt with all vulnerabilities
     const prompt = buildMitigationPrompt(vulnerabilities, kevMap);
 
     // 3. Call Gemini
@@ -196,7 +227,7 @@ exports.createMitigationSteps = async (vulnerabilities) => {
 
     console.log(`[LLM] Successfully generated ${parsed.mitigations.length} mitigation plans.`);
 
-    // 5. Map back to the format the scanController expects
+    // 5. Map to expected format
     return parsed.mitigations.map((m) => ({
       cveId: m.cveId,
       deviceIp: m.deviceIp,
@@ -246,6 +277,7 @@ exports.sendChatToLLM = async (chatHistory, userMessage, scanContext = null) => 
   try {
     // Build system instruction with optional scan context
     const systemInstruction = buildChatSystemInstruction(scanContext);
+    const normalizedHistory = normalizeChatHistory(chatHistory);
 
     // Create a chat-tuned model instance with the system instruction
     const chatModel = genAI.getGenerativeModel({
@@ -259,7 +291,7 @@ exports.sendChatToLLM = async (chatHistory, userMessage, scanContext = null) => 
 
     // Start a chat session with existing history
     const chat = chatModel.startChat({
-      history: chatHistory || [],
+      history: normalizedHistory,
     });
 
     // Send the new user message

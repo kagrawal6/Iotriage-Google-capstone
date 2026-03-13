@@ -28,7 +28,18 @@ export default function ChatWindow() {
         { role: "user", content: message },
       ];
 
-      const { reply } = await sendChatMessage(historyForBackend, message);
+      const scanContext = scanResults
+        ? {
+            devices: scanResults.devices || [],
+            vulnerabilities: scanResults.vulnerabilities || [],
+          }
+        : null;
+
+      const { reply } = await sendChatMessage(
+        historyForBackend,
+        message,
+        scanContext
+      );
       addChatMessage("assistant", reply);
     } catch (err) {
       addChatMessage("assistant", `Error: ${err.message}`);
