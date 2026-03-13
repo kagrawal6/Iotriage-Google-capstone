@@ -10,7 +10,7 @@ module.exports = {
     "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json",
 
   // Google Gemini LLM Configuration
-  GEMINI_MODEL: "gemini-2.0-flash",
-  GEMINI_MAX_OUTPUT_TOKENS: 4096,
+  GEMINI_MODEL: "gemini-2.5-flash",
+  GEMINI_MAX_OUTPUT_TOKENS: 65536,
   GEMINI_TEMPERATURE: 0.3, // Low temperature for factual, consistent output
 };
