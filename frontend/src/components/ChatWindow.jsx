@@ -2,6 +2,21 @@ import { useState } from "react";
 import { useScan } from "../context/ScanContext";
 import { sendChatMessage } from "../services/api";
 
+const normalizeAssistantText = (text) =>
+  String(text || "")
+    .replace(/\*\*/g, "")
+    .replace(/`([^`]*)`/g, "$1")
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(/^\s*#{1,6}\s*/g, "")
+        .replace(/^\s*[-*•]\s+/g, "• ")
+        .trimEnd()
+    )
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+
 /**
  * ChatWindow — Chat interface. Placeholder for Gemini AI integration.
  */
@@ -75,7 +90,11 @@ export default function ChatWindow() {
                   : "border border-gray-200 text-gray-700"
               }`}
             >
-              {msg.content}
+              <p className="whitespace-pre-wrap break-words">
+                {msg.role === "assistant"
+                  ? normalizeAssistantText(msg.content)
+                  : msg.content}
+              </p>
             </div>
           </div>
         ))}

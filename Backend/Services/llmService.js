@@ -147,7 +147,8 @@ function buildChatSystemInstruction(scanContext) {
 3. If the user asks about a specific CVE or device, reference the scan data provided.
 4. If you don't know something, say so honestly rather than guessing.
 5. Never recommend disabling security features as a fix.
-6. When suggesting actions, give step-by-step instructions.`;
+6. When suggesting actions, give step-by-step instructions.
+7. Respond in clean plain text only (no markdown symbols like #, *, or backticks).`;
 
   if (scanContext) {
     instruction += `\n\n**The user's network scan found the following data — use it to answer their questions:**\n${JSON.stringify(scanContext, null, 2)}`;
