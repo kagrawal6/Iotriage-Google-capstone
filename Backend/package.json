@@ -15,7 +15,7 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "test": "node --test \"Backend Tests/LLMServiceTests/**/*.test.js\""
+    "test": "node --test 'Backend Tests/*.test.js'"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",

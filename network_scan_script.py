@@ -71,13 +71,9 @@ def parse_scan_to_json(scanner, output_filename="scan_results.json"):
             continue
 
         # 1. Extract Device Name (Hostname)
-        # Nmap returns a list of dictionaries for hostnames. We want the first valid name.
-        hostnames = scanner[host].get('hostnames', [])
-        device_name = "Unknown"
-        for hn in hostnames:
-            if hn.get('name'):
-                device_name = hn['name']
-                break
+        device_name = scanner[host].hostname()
+        if not device_name:
+            device_name = "Unknown"
 
         # 2. Extract Device Type
         device_type = "Unknown"
