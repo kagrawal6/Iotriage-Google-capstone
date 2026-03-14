@@ -87,7 +87,7 @@ class ScannerApp:
         save_frame = tk.Frame(root)
         save_frame.pack(fill=tk.X, padx=20, pady=(2, 0))
 
-        default_save_path = os.path.join(os.path.expanduser("~"), "Documents", "scan_results.json")
+        default_save_path = os.path.join(_this_dir, "scan_results.json")
         self.save_path_var = tk.StringVar(value=default_save_path)
 
         self.entry_save_path = tk.Entry(save_frame, textvariable=self.save_path_var, width=46)
@@ -201,6 +201,8 @@ class ScannerApp:
 
 
 if __name__ == "__main__":
+    if not is_admin():
+        run_as_admin()
     root = tk.Tk()
     app = ScannerApp(root)
     root.mainloop()
