@@ -2,9 +2,10 @@
  * nvdService.js
  * -------------
  * Handles communication with the National Vulnerability Database (NVD).
- * 
+ *
  * Responsibilities:
  *  - Query the NVD CVE API using a CPE string
+ *  - For versioned CPEs, use virtualMatchString + versionStart/versionEnd
  *  - Normalize CVE records into a simplified internal structure
  *  - Deduplicate CVEs with the same ID
  *  - Select the best CVSS score if multiple exist
@@ -14,26 +15,67 @@
 
 const axios = require("axios");
 
-/**
- * Base endpoint for the NVD CVE API
- */
 const NVD_BASE = "https://services.nvd.nist.gov/rest/json/cves/2.0";
-const NVD_API_KEY = "41efb0c3-9d9b-43de-9c6d-e8333e5bd998"
-
 
 /**
- * Extract the best CVSS score available.
- * 
- * CVEs may contain multiple scoring versions:
- *  - CVSS v4
- *  - CVSS v3.1
- *  - CVSS v3.0
- *  - CVSS v2
- * 
- * We prefer the most recent version available.
+ * Parse a CPE 2.3 string into its main components.
+ * Example:
+ * cpe:2.3:a:apache:log4j:2.16.0:*:*:*:*:*:*:*
  */
+function parseCpe23(cpe) {
+  if (!cpe || typeof cpe !== "string") {
+    throw new Error("cpe must be a non-empty string");
+  }
+
+  const parts = cpe.split(":");
+  if (parts.length < 6 || parts[0] !== "cpe" || parts[1] !== "2.3") {
+    throw new Error(`Invalid CPE 2.3 string: ${cpe}`);
+  }
+
+  return {
+    part: parts[2] || "*",
+    vendor: parts[3] || "*",
+    product: parts[4] || "*",
+    version: parts[5] || "*"
+  };
+}
+
+/**
+ * Build NVD query params.
+ *
+ * If the CPE has a concrete version, use:
+ *   virtualMatchString = cpe:2.3:part:vendor:product
+ *   versionStart = version (including)
+ *   versionEnd   = version (including)
+ *
+ * This narrows results to that exact version in NVD's range-matching model.
+ *
+ * If the version is missing / wildcard, fall back to cpeName.
+ */
+function buildNvdQueryParams(cpe, startIndex, resultsPerPage) {
+  const { part, vendor, product, version } = parseCpe23(cpe);
+
+  const params = {
+    startIndex,
+    resultsPerPage
+  };
+
+  const hasConcreteVersion = version && version !== "*" && version !== "-";
+
+  if (hasConcreteVersion) {
+    params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}`;
+    params.versionStart = version;
+    params.versionStartType = "including";
+    params.versionEnd = version;
+    params.versionEndType = "including";
+  } else {
+    params.cpeName = cpe;
+  }
+
+  return params;
+}
+
 function extractCvss(metrics = {}) {
-  // CVSS v4
   const v4 = metrics.cvssMetricV40?.[0]?.cvssData || metrics.cvssMetric4?.[0]?.cvssData;
   if (v4?.baseScore != null) {
     return {
@@ -43,7 +85,6 @@ function extractCvss(metrics = {}) {
     };
   }
 
-  // CVSS v3.1
   const v31 = metrics.cvssMetricV31?.[0]?.cvssData;
   if (v31?.baseScore != null) {
     return {
@@ -53,7 +94,6 @@ function extractCvss(metrics = {}) {
     };
   }
 
-  // CVSS v3.0
   const v30 = metrics.cvssMetricV30?.[0]?.cvssData;
   if (v30?.baseScore != null) {
     return {
@@ -63,7 +103,6 @@ function extractCvss(metrics = {}) {
     };
   }
 
-  // CVSS v2
   const v2Data = metrics.cvssMetricV2?.[0]?.cvssData;
   const v2Metric = metrics.cvssMetricV2?.[0];
   if (v2Data?.baseScore != null) {
@@ -77,13 +116,8 @@ function extractCvss(metrics = {}) {
   return { version: null, score: null, severity: null };
 }
 
-/**
- * Extract the best description from the CVE.
- * Prefer English descriptions if available.
- */
 function getDescription(cve = {}) {
   const descriptions = Array.isArray(cve.descriptions) ? cve.descriptions : [];
-
   return (
     descriptions.find((d) => d?.lang === "en")?.value ||
     descriptions[0]?.value ||
@@ -91,10 +125,6 @@ function getDescription(cve = {}) {
   );
 }
 
-/**
- * Convert severity string into numeric ranking.
- * Used for sorting vulnerabilities.
- */
 function severityRank(severity) {
   switch ((severity || "").toUpperCase()) {
     case "CRITICAL":
@@ -110,14 +140,6 @@ function severityRank(severity) {
   }
 }
 
-/**
- * Compare two CVSS records to determine which is "better".
- * 
- * Ranking rules:
- * 1. Prefer newer CVSS versions
- * 2. Prefer higher base scores
- * 3. Prefer higher severity
- */
 function compareCvss(a, b) {
   const versionOrder = { "4.0": 4, "3.1": 3, "3.0": 2, "2.0": 1, null: 0 };
 
@@ -132,18 +154,11 @@ function compareCvss(a, b) {
   return severityRank(b?.severity) - severityRank(a?.severity);
 }
 
-/**
- * Choose the better CVSS record between two options.
- */
 function pickBetterCvss(current, incoming) {
   if (!current) return incoming;
   return compareCvss(current, incoming) > 0 ? incoming : current;
 }
 
-/**
- * Extract references from the CVE record.
- * These usually include vendor advisories, patches, etc.
- */
 function getReferences(cve = {}) {
   return Array.isArray(cve.references)
     ? cve.references.map((ref) => ({
@@ -154,9 +169,6 @@ function getReferences(cve = {}) {
     : [];
 }
 
-/**
- * Extract vendor comments if available.
- */
 function getVendorComments(cve = {}) {
   return Array.isArray(cve.vendorComments)
     ? cve.vendorComments.map((comment) => ({
@@ -167,9 +179,6 @@ function getVendorComments(cve = {}) {
     : [];
 }
 
-/**
- * Convert raw NVD vulnerability into normalized object.
- */
 function normalizeCve(vuln) {
   const cve = vuln?.cve || {};
   const cveId = cve.id || null;
@@ -186,10 +195,26 @@ function normalizeCve(vuln) {
   };
 }
 
-/**
- * Merge duplicate CVEs (same CVE ID).
- * Ensures we keep the best score and latest metadata.
- */
+function dedupeByUrl(items = []) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = item?.url || JSON.stringify(item);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function dedupeComments(items = []) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = `${item?.organization || ""}|${item?.comment || ""}|${item?.lastModified || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function mergeCve(existing, incoming) {
   if (!existing) return incoming;
 
@@ -199,24 +224,20 @@ function mergeCve(existing, incoming) {
       existing.description && existing.description !== "No description available"
         ? existing.description
         : incoming.description,
-
     cvss: pickBetterCvss(existing.cvss, incoming.cvss),
-
     published: existing.published || incoming.published,
-
     lastModified:
       new Date(existing.lastModified || 0) > new Date(incoming.lastModified || 0)
         ? existing.lastModified
         : incoming.lastModified,
-
-    references: [...(existing.references || []), ...(incoming.references || [])],
-    vendorComments: [...(existing.vendorComments || []), ...(incoming.vendorComments || [])]
+    // references: dedupeByUrl([...(existing.references || []), ...(incoming.references || [])]),
+    // vendorComments: dedupeComments([
+    //  ...(existing.vendorComments || []),
+    //  ...(incoming.vendorComments || [])
+    //])
   };
 }
 
-/**
- * Sort CVEs by importance.
- */
 function sortCves(cves) {
   return cves.sort((a, b) => {
     const scoreA = a.cvss?.score ?? -1;
@@ -233,11 +254,8 @@ function sortCves(cves) {
   });
 }
 
-/**
- * Query NVD for CVEs related to a CPE string.
- */
 async function getCvesByCpe(
-  cpeName,
+  cpe,
   {
     apiKey = null,
     maxToReturn = 25,
@@ -245,8 +263,8 @@ async function getCvesByCpe(
     resultsPerPage = 50
   } = {}
 ) {
-  if (!cpeName || typeof cpeName !== "string") {
-    throw new Error("cpeName must be a non-empty string");
+  if (!cpe || typeof cpe !== "string") {
+    throw new Error("cpe must be a non-empty string");
   }
 
   const byId = new Map();
@@ -254,16 +272,14 @@ async function getCvesByCpe(
   const perPage = Math.min(resultsPerPage, maxToFetch);
 
   while (byId.size < maxToFetch) {
+    const params = buildNvdQueryParams(cpe, startIndex, perPage);
+
     const response = await axios.get(NVD_BASE, {
       headers: {
         accept: "application/json",
         ...(apiKey ? { apiKey } : {})
       },
-      params: {
-        cpeName,
-        startIndex,
-        resultsPerPage: perPage
-      }
+      params
     });
 
     const data = response.data || {};
@@ -289,9 +305,6 @@ async function getCvesByCpe(
   return ranked.slice(0, maxToReturn);
 }
 
-/**
- * Public function used by controllers.
- */
 exports.fetchCVEs = async (cpe) => {
   console.log("Querying NVD for:", cpe);
 
