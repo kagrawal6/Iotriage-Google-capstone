@@ -21,7 +21,13 @@ npm install
 node app.js
 ```
 
-The backend starts on `http://localhost:3000`.
+Before starting, create a `Backend/.env` file with your Gemini API key:
+
+```
+GEMINI_API_KEY=your_key_here
+```
+
+You can get a key from [Google AI Studio](https://aistudio.google.com/apikey). The backend starts on `http://localhost:3000`.
 
 ## Running the Frontend
 
