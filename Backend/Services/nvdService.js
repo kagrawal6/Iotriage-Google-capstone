@@ -43,33 +43,21 @@ function parseCpe23(cpe) {
 /**
  * Build NVD query params.
  *
- * If the CPE has a concrete version, use:
- *   virtualMatchString = cpe:2.3:part:vendor:product
- *   versionStart = version (including)
- *   versionEnd   = version (including)
- *
- * This narrows results to that exact version in NVD's range-matching model.
- *
- * If the version is missing / wildcard, fall back to cpeName.
+ * - Concrete version (e.g. 2.6)  → cpeName = cpe:2.3:part:vendor:product:version
+ *   NVD accepts partial cpeName strings up to the version component.
+ * - Wildcard / missing version    → virtualMatchString = full 13-component CPE
+ *   virtualMatchString does prefix matching and doesn't require dictionary membership.
  */
 function buildNvdQueryParams(cpe, startIndex, resultsPerPage) {
   const { part, vendor, product, version } = parseCpe23(cpe);
-
-  const params = {
-    startIndex,
-    resultsPerPage
-  };
-
   const hasConcreteVersion = version && version !== "*" && version !== "-";
 
+  const params = { startIndex, resultsPerPage };
+
   if (hasConcreteVersion) {
-    params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}`;
-    params.versionStart = version;
-    params.versionStartType = "including";
-    params.versionEnd = version;
-    params.versionEndType = "including";
+    params.cpeName = `cpe:2.3:${part}:${vendor}:${product}:${version}`;
   } else {
-    params.cpeName = cpe;
+    params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}:*:*:*:*:*:*:*`;
   }
 
   return params;
@@ -302,7 +290,11 @@ async function getCvesByCpe(
   }
 
   const ranked = sortCves(Array.from(byId.values()));
-  return ranked.slice(0, maxToReturn);
+  return selectTopVulnerabilities(ranked, maxToReturn);
+}
+
+function selectTopVulnerabilities(cves, limit = 10) {
+  return cves.slice(0, limit);
 }
 
 exports.fetchCVEs = async (cpe) => {
@@ -311,12 +303,19 @@ exports.fetchCVEs = async (cpe) => {
   try {
     return await getCvesByCpe(cpe, {
       apiKey: process.env.NVD_API_KEY || null,
-      maxToReturn: 25,
+      maxToReturn: 10,
       maxToFetch: 100,
       resultsPerPage: 50
     });
   } catch (err) {
     const status = err.response?.status;
+
+    // NVD returns 404 when no CVEs match the query — treat as empty result
+    if (status === 404) {
+      console.log(`[NVD] No CVEs found for ${cpe} (404)`);
+      return [];
+    }
+
     const statusText = err.response?.statusText || "";
     const data = err.response?.data || "";
 
