@@ -82,7 +82,18 @@ exports.uploadScan = async (req, res) => {
     // Step 4: Attach mitigation text to each vulnerability for the response
     vulnerabilities = vulnerabilities.map(vuln => {
       const match = mitigations.find(m => m.cveId === vuln.cveId);
-      return { ...vuln, mitigation: match ? match.mitigation : null };
+      if (match) {
+        return {
+          ...vuln,
+          mitigation: match.mitigation,
+          riskSummary: match.riskSummary || null,
+          priority: match.priority || null,
+          steps: match.steps || [],
+          verification: match.verification || null,
+          ransomwareWarning: match.ransomwareWarning || null,
+        };
+      }
+      return { ...vuln, mitigation: null };
     });
 
     res.json({

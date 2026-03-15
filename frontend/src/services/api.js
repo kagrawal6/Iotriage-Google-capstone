@@ -31,17 +31,18 @@ export async function uploadScan(scanJson) {
 
 /**
  * Sends a chat message (with full conversation history) to the backend LLM.
- * Placeholder for Gemini AI integration.
+ * Includes optional scan context so backend can ground AI answers.
  *
  * @param {Array<{role: string, content: string}>} chatHistory
  * @param {string} message - The new user message
+ * @param {Object|null} scanContext - Optional scan data ({ devices, vulnerabilities })
  * @returns {Promise<{reply: string}>}
  */
-export async function sendChatMessage(chatHistory, message) {
+export async function sendChatMessage(chatHistory, message, scanContext = null) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chatHistory, message }),
+    body: JSON.stringify({ chatHistory, message, scanContext }),
   });
 
   if (!res.ok) {

@@ -36,8 +36,8 @@ export default function ChatPage() {
 
       {/* Gemini placeholder notice */}
       <div className="border border-gray-300 bg-gray-50 rounded px-3 py-2 mb-3 text-xs text-gray-600">
-        <strong>Note:</strong> Gemini AI integration pending. Chat currently
-        returns stub responses from the backend.
+        <strong>Note:</strong> Gemini AI prototype added. Chat is powered by
+        Google Gemini and grounded in your scan results.
       </div>
 
       {/* Chat window */}
