@@ -7,8 +7,6 @@
  *  - Query the NVD CVE API using a CPE string
  *  - For versioned CPEs, use virtualMatchString + versionStart/versionEnd
  *  - Normalize CVE records into a simplified internal structure
- *  - Deduplicate CVEs with the same ID
- *  - Select the best CVSS score if multiple exist
  *  - Rank vulnerabilities by severity/score/date
  *  - Return the top N vulnerabilities
  */
@@ -129,25 +127,6 @@ function severityRank(severity) {
   }
 }
 
-function compareCvss(a, b) {
-  const versionOrder = { "4.0": 4, "3.1": 3, "3.0": 2, "2.0": 1, null: 0 };
-
-  const aVersion = versionOrder[a?.version ?? null] ?? 0;
-  const bVersion = versionOrder[b?.version ?? null] ?? 0;
-  if (aVersion !== bVersion) return bVersion - aVersion;
-
-  const aScore = a?.score ?? -1;
-  const bScore = b?.score ?? -1;
-  if (aScore !== bScore) return bScore - aScore;
-
-  return severityRank(b?.severity) - severityRank(a?.severity);
-}
-
-function pickBetterCvss(current, incoming) {
-  if (!current) return incoming;
-  return compareCvss(current, incoming) > 0 ? incoming : current;
-}
-
 function getReferences(cve = {}) {
   return Array.isArray(cve.references)
     ? cve.references.map((ref) => ({
@@ -166,22 +145,6 @@ function getVendorComments(cve = {}) {
         lastModified: comment.lastModified || null
       }))
     : [];
-}
-
-function normalizeCve(vuln) {
-  const cve = vuln?.cve || {};
-  const cveId = cve.id || null;
-  if (!cveId) return null;
-
-  return {
-    cveId,
-    description: getDescription(cve),
-    cvss: extractCvss(cve.metrics || {}),
-    published: cve.published || null,
-    lastModified: cve.lastModified || null,
-    // references: getReferences(cve),
-    vendorComments: getVendorComments(cve)
-  };
 }
 
 function dedupeByUrl(items = []) {
@@ -204,26 +167,19 @@ function dedupeComments(items = []) {
   });
 }
 
-function mergeCve(existing, incoming) {
-  if (!existing) return incoming;
+function normalizeCve(vuln) {
+  const cve = vuln?.cve || {};
+  const cveId = cve.id || null;
+  if (!cveId) return null;
 
   return {
-    ...existing,
-    description:
-      existing.description && existing.description !== "No description available"
-        ? existing.description
-        : incoming.description,
-    cvss: pickBetterCvss(existing.cvss, incoming.cvss),
-    published: existing.published || incoming.published,
-    lastModified:
-      new Date(existing.lastModified || 0) > new Date(incoming.lastModified || 0)
-        ? existing.lastModified
-        : incoming.lastModified,
-    // references: dedupeByUrl([...(existing.references || []), ...(incoming.references || [])]),
-    // vendorComments: dedupeComments([
-    //  ...(existing.vendorComments || []),
-    //  ...(incoming.vendorComments || [])
-    //])
+    cveId,
+    description: getDescription(cve),
+    cvss: extractCvss(cve.metrics || {}),
+    published: cve.published || null,
+    lastModified: cve.lastModified || null,
+    // references: dedupeByUrl(getReferences(cve)),
+    vendorComments: dedupeComments(getVendorComments(cve))
   };
 }
 
@@ -256,11 +212,11 @@ async function getCvesByCpe(
     throw new Error("cpe must be a non-empty string");
   }
 
-  const byId = new Map();
+  const cves = [];
   let startIndex = 0;
   const perPage = Math.min(resultsPerPage, maxToFetch);
 
-  while (byId.size < maxToFetch) {
+  while (cves.length < maxToFetch) {
     const params = buildNvdQueryParams(cpe, startIndex, perPage);
 
     const response = await axios.get(NVD_BASE, {
@@ -279,10 +235,9 @@ async function getCvesByCpe(
       const normalized = normalizeCve(vuln);
       if (!normalized) continue;
 
-      const existing = byId.get(normalized.cveId);
-      byId.set(normalized.cveId, mergeCve(existing, normalized));
+      cves.push(normalized);
 
-      if (byId.size >= maxToFetch) break;
+      if (cves.length >= maxToFetch) break;
     }
 
     startIndex += vulns.length;
@@ -290,7 +245,7 @@ async function getCvesByCpe(
     if (vulns.length === 0 || startIndex >= total) break;
   }
 
-  const ranked = sortCves(Array.from(byId.values()));
+  const ranked = sortCves(cves);
   return selectTopVulnerabilities(ranked, maxToReturn);
 }
 
