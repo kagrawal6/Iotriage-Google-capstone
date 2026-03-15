@@ -56,9 +56,10 @@ function buildNvdQueryParams(cpe, startIndex, resultsPerPage) {
 
   if (hasConcreteVersion) {
     params.cpeName = `cpe:2.3:${part}:${vendor}:${product}:${version}`;
-  } else {
-    params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}:*:*:*:*:*:*:*`;
-  }
+  } 
+  // else {
+  //   params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}:*:*:*:*:*:*:*`;
+  // }
 
   return params;
 }
