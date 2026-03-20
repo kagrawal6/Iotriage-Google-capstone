@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from "react";
+import useStorage from "../storage/useStorage";
 
 /**
  * ScanContext
@@ -10,10 +11,10 @@ import { createContext, useContext, useState } from "react";
 const ScanContext = createContext(null);
 
 export function ScanProvider({ children }) {
-  const [scanResults, setScanResults] = useState(null); // { devices, vulnerabilities }
+  const [scanResults, setScanResults] = useStorage("scanResults", null); // { devices, vulnerabilities }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useStorage("chatHistory", []);
 
   /** Store results after a successful upload */
   const storeScanResults = (results) => {
