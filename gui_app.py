@@ -87,7 +87,8 @@ class ScannerApp:
         save_frame = tk.Frame(root)
         save_frame.pack(fill=tk.X, padx=20, pady=(2, 0))
 
-        default_save_path = os.path.join(_this_dir, "scan_results.json")
+        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
+        default_save_path = os.path.join(downloads_path, "scan_results.json")
         self.save_path_var = tk.StringVar(value=default_save_path)
 
         self.entry_save_path = tk.Entry(save_frame, textvariable=self.save_path_var, width=46)
