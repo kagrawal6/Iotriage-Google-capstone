@@ -269,10 +269,10 @@ exports.createMitigationSteps = async (vulnerabilities) => {
  *
  * @param {Array<Object>} chatHistory - Previous messages [{ role: "user"|"model", parts: [{ text }] }]
  * @param {string} userMessage - The new message from the user
+ * @param {Response} res - Write LLM response to this and end when response is done
  * @param {Object|null} scanContext - Optional: { devices, vulnerabilities } from the scan
- * @returns {Promise<string>} The AI response text
  */
-exports.sendChatToLLM = async (chatHistory, userMessage, scanContext = null) => {
+exports.sendChatToLLM = async (chatHistory, userMessage, res, scanContext = null) => {
   console.log("[LLM] Processing chat message...");
 
   try {
@@ -295,14 +295,18 @@ exports.sendChatToLLM = async (chatHistory, userMessage, scanContext = null) => 
       history: normalizedHistory,
     });
 
-    // Send the new user message
-    const result = await chat.sendMessage(userMessage);
-    const responseText = result.response.text();
+    const result = await chat.sendMessageStream(userMessage);
 
-    console.log("[LLM] Chat response generated successfully.");
-    return responseText;
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      res.write(`data: ${JSON.stringify({ text })}\n\n`);
+    }
+
+    res.write("data: [DONE]\n\n");
+    res.end()
   } catch (err) {
     console.error("[LLM] Chat request failed:", err.message);
-    throw new Error("Failed to get a response from the AI. Please try again.");
+    res.write(`data: ${JSON.stringify({ error: "Failed to get a response from the AI." })}\n\n`);
+    res.end();
   }
 };

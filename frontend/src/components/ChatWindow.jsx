@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useScan } from "../context/ScanContext";
 import { sendChatMessage } from "../services/api";
 
@@ -21,9 +21,14 @@ const normalizeAssistantText = (text) =>
  * ChatWindow — Chat interface. Placeholder for Gemini AI integration.
  */
 export default function ChatWindow() {
-  const { chatHistory, addChatMessage, scanResults } = useScan();
+  const { chatHistory, addChatMessage, updateLastChatMessage, scanResults } = useScan();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -33,6 +38,9 @@ export default function ChatWindow() {
     addChatMessage("user", message);
     setInput("");
     setIsSending(true);
+
+    // Chat message for AI to stream into
+    addChatMessage("assistant", "")
 
     try {
       const historyForBackend = [
@@ -50,14 +58,15 @@ export default function ChatWindow() {
           }
         : null;
 
-      const { reply } = await sendChatMessage(
-        historyForBackend,
-        message,
-        scanContext
-      );
-      addChatMessage("assistant", reply);
+      let streamedText = "";
+
+      await sendChatMessage(historyForBackend, message, scanContext, (chunk) => {
+        streamedText += chunk;
+        updateLastChatMessage(streamedText);
+      });
+
     } catch (err) {
-      addChatMessage("assistant", `Error: ${err.message}`);
+      updateLastChatMessage(`Error: ${err.message}`);
     } finally {
       setIsSending(false);
     }
@@ -99,13 +108,7 @@ export default function ChatWindow() {
           </div>
         ))}
 
-        {isSending && (
-          <div className="flex justify-start">
-            <div className="border border-gray-200 rounded px-3 py-2 text-sm text-gray-400">
-              Thinking...
-            </div>
-          </div>
-        )}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
