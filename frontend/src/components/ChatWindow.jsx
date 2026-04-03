@@ -40,7 +40,7 @@ export default function ChatWindow() {
     setIsSending(true);
 
     // Chat message for AI to stream into
-    addChatMessage("assistant", "")
+    addChatMessage("assistant", "Thinking…")
 
     try {
       const historyForBackend = [
