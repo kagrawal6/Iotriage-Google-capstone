@@ -36,9 +36,10 @@ export async function uploadScan(scanJson) {
  * @param {Array<{role: string, content: string}>} chatHistory
  * @param {string} message - The new user message
  * @param {Object|null} scanContext - Optional scan data ({ devices, vulnerabilities })
- * @returns {Promise<{reply: string}>}
+ * @param {function(string): void} onChunk - Called with each text chunk as it arrives
+ * @returns {Promise<void>}
  */
-export async function sendChatMessage(chatHistory, message, scanContext = null) {
+export async function sendChatMessage(chatHistory, message, scanContext = null, onChunk) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -50,5 +51,23 @@ export async function sendChatMessage(chatHistory, message, scanContext = null) 
     throw new Error(errBody.error || `Chat request failed (HTTP ${res.status})`);
   }
 
-  return res.json();
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+
+  while(true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+
+    for (const line of chunk.split("\n")) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (payload === "[DONE]") return;
+
+      const parsed = JSON.parse(payload);
+      if (parsed.error) throw new Error(parsed.error);
+      if (parsed.text) onChunk(parsed.text);
+    }
+  }
 }

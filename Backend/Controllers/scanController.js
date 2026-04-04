@@ -10,6 +10,7 @@ const Vulnerability = require("../Models/vulnerability");
 const nvdService = require("../Services/nvdService");
 const llmService = require("../Services/llmService");
 
+
 /**
  * Parses scan_results.json (array of device objects) into Device instances.
  * The file is produced by network_scan_script.py: one object per host found
@@ -54,9 +55,11 @@ exports.uploadScan = async (req, res) => {
 
     // Step 1: Convert raw JSON array into Device objects (validates shape)
     const devices = parseScanToDevices(scanData);
-    let vulnerabilities = [];
 
-    // Step 2: For each device, get all CPEs (OS + open ports), then fetch CVEs from NVD
+    // Step 2: Collect all CVEs across every device CPE, keyed by "cveId|deviceIp"
+    // to avoid duplicate entries for the same CVE on the same device.
+    const vulnMap = new Map();
+
     for (const device of devices) {
       const cpes = device.getCPEs();
 
@@ -64,22 +67,27 @@ exports.uploadScan = async (req, res) => {
         const cves = await nvdService.fetchCVEs(cpe);
 
         for (const cve of cves) {
-          vulnerabilities.push(
-            new Vulnerability({
-              ...cve,
-              deviceIp: device.ipAddress
-            })
-          );
+          const key = `${cve.cveId}|${device.ipAddress}`;
+          if (!vulnMap.has(key)) {
+            vulnMap.set(key, new Vulnerability({ ...cve, deviceIp: device.ipAddress }));
+          }
         }
       }
     }
 
-    //TODO: Rank vulnerabilities
+    // Step 3: Collect all vulnerabilities sorted by severity (Critical → High → Medium → Low)
+    const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
+    let vulnerabilities = Array.from(vulnMap.values()).sort((a, b) => {
+      const rankA = severityRank[(a.severity || "").toUpperCase()] ?? 0;
+      const rankB = severityRank[(b.severity || "").toUpperCase()] ?? 0;
+      if (rankA !== rankB) return rankB - rankA;
+      return (b.cvssScore ?? -1) - (a.cvssScore ?? -1);
+    });
 
-    // Step 3: Ask LLM for mitigation steps per CVE
+    // Step 4: Ask LLM for mitigation steps per CVE
     const mitigations = await llmService.createMitigationSteps(vulnerabilities);
 
-    // Step 4: Attach mitigation text to each vulnerability for the response
+    // Step 5: Attach mitigation text to each vulnerability for the response
     vulnerabilities = vulnerabilities.map(vuln => {
       const match = mitigations.find(m => m.cveId === vuln.cveId);
       if (match) {

@@ -31,6 +31,7 @@ export function ScanProvider({ children }) {
     setChatHistory((prev) => [...prev, { role, content }]);
   };
 
+
   const getDeviceChat = (ip) => deviceChats[ip] || [];
 
   const addDeviceChatMessage = (ip, role, content) => {
@@ -39,6 +40,18 @@ export function ScanProvider({ children }) {
       [ip]: [...(prev[ip] || []), { role, content }],
     }));
   };
+
+
+  /** Update the content of the last message in chat history (for streaming) */
+  const updateLastChatMessage = (content) => {
+    setChatHistory((prev) => {
+      const updated = [...prev];
+      updated[updated.length - 1] = { ...updated[updated.length - 1], content };
+      return updated;
+    });
+  };
+
+  /** Clear everything */
 
   const resetAll = () => {
     setScanResults(null);
@@ -62,6 +75,7 @@ export function ScanProvider({ children }) {
         addChatMessage,
         getDeviceChat,
         addDeviceChatMessage,
+        updateLastChatMessage,
         resetAll,
       }}
     >
