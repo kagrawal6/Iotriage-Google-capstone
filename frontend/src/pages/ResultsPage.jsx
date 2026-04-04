@@ -116,6 +116,7 @@ export default function ResultsPage() {
               <DeviceCard
                 key={(device.ipAddress || device.ip_address) + "-" + i}
                 device={device}
+                allVulnerabilities={vulnerabilities}
               />
             ))
           )}
