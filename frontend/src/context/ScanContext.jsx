@@ -11,29 +11,40 @@ import useStorage from "../storage/useStorage";
 const ScanContext = createContext(null);
 
 export function ScanProvider({ children }) {
-  const [scanResults, setScanResults] = useStorage("scanResults", null); // { devices, vulnerabilities }
+  const [scanResults, setScanResults] = useStorage("scanResults", null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [chatHistory, setChatHistory] = useStorage("chatHistory", []);
+  // Per-device chat histories keyed by IP: { "192.168.1.1": [{role, content}, ...] }
+  const [deviceChats, setDeviceChats] = useStorage("deviceChats", {});
 
-  /** Store results after a successful upload */
   const storeScanResults = (results) => {
     setScanResults(results);
     setError(null);
     // Reset chat when new scan is uploaded
     setChatHistory([]);
+    setDeviceChats({});
   };
 
-  /** Add a message to chat history */
+    /** Add a message to chat history */
   const addChatMessage = (role, content) => {
     setChatHistory((prev) => [...prev, { role, content }]);
   };
 
-  /** Clear everything */
+  const getDeviceChat = (ip) => deviceChats[ip] || [];
+
+  const addDeviceChatMessage = (ip, role, content) => {
+    setDeviceChats((prev) => ({
+      ...prev,
+      [ip]: [...(prev[ip] || []), { role, content }],
+    }));
+  };
+
   const resetAll = () => {
     setScanResults(null);
     setError(null);
     setChatHistory([]);
+    setDeviceChats({});
     setIsLoading(false);
   };
 
@@ -44,10 +55,13 @@ export function ScanProvider({ children }) {
         isLoading,
         error,
         chatHistory,
+        deviceChats,
         setIsLoading,
         setError,
         storeScanResults,
         addChatMessage,
+        getDeviceChat,
+        addDeviceChatMessage,
         resetAll,
       }}
     >
