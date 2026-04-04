@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useScan } from "../context/ScanContext";
 
 export default function Navbar() {
-  const { scanResults } = useScan();
+  const { scanResults, scanHistory } = useScan();
 
   const linkClass = ({ isActive }) =>
     `px-3 py-1 text-sm ${
@@ -26,6 +26,16 @@ export default function Navbar() {
             <NavLink to="/upload" className={linkClass}>
               Upload
             </NavLink>
+            {scanHistory.length > 0 && (
+              <NavLink to="/history" className={linkClass}>
+                History
+                {scanHistory.length > 0 && (
+                  <span className="ml-1 text-xs text-gray-400">
+                    ({scanHistory.length})
+                  </span>
+                )}
+              </NavLink>
+            )}
             {scanResults && (
               <>
                 <NavLink to="/results" className={linkClass}>
