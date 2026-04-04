@@ -9,24 +9,19 @@ const llmService = require("../Services/llmService");
 
 /**
  * Receives chat context and new user message.
- * Sends them to the LLM and returns the AI response.
+ * Streams the AI response back tot he client via SSE.
  * @param {Request} req
  * @param {Response} res
  */
 exports.sendMessage = async (req, res) => {
-  try {
-    const { chatHistory, message, scanContext } = req.body;
 
-    const aiResponse = await llmService.sendChatToLLM(
-      chatHistory,
-      message,
-      scanContext || null
-    );
+  const { chatHistory, message, scanContext } = req.body;
 
-    res.json({ reply: aiResponse });
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
 
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "LLM request failed" });
-  }
+  await llmService.sendChatToLLM(chatHistory, message, res, scanContext || null);
+    
 };
