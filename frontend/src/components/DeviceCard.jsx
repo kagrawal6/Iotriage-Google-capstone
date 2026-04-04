@@ -18,10 +18,10 @@ const normalizeText = (text) =>
     .trim();
 
 /**
- * DeviceCard — Displays a single scanned device.
+ * DeviceCard — Displays a single scanned device with per-device streaming chat.
  */
 export default function DeviceCard({ device, allVulnerabilities = [] }) {
-  const { getDeviceChat, addDeviceChatMessage } = useScan();
+  const { getDeviceChat, addDeviceChatMessage, updateLastDeviceChatMessage } = useScan();
   const [chatOpen, setChatOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -37,7 +37,7 @@ export default function DeviceCard({ device, allVulnerabilities = [] }) {
     if (chatOpen && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, chatOpen, isSending]);
+  }, [messages, chatOpen]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -48,20 +48,28 @@ export default function DeviceCard({ device, allVulnerabilities = [] }) {
     setInput("");
     setIsSending(true);
 
+
+    addDeviceChatMessage(ip, "assistant", "Thinking…");
+
     try {
       const historyForBackend = [
         ...messages,
         { role: "user", content: message },
       ];
 
-      const { reply } = await sendChatMessage(
+      let streamedText = "";
+
+      await sendChatMessage(
         historyForBackend,
         message,
-        { devices: [device], vulnerabilities: deviceVulns }
+        { devices: [device], vulnerabilities: deviceVulns },
+        (chunk) => {
+          streamedText += chunk;
+          updateLastDeviceChatMessage(ip, streamedText);
+        }
       );
-      addDeviceChatMessage(ip, "assistant", reply);
     } catch (err) {
-      addDeviceChatMessage(ip, "assistant", `Error: ${err.message}`);
+      updateLastDeviceChatMessage(ip, `Error: ${err.message}`);
     } finally {
       setIsSending(false);
     }
@@ -153,13 +161,6 @@ export default function DeviceCard({ device, allVulnerabilities = [] }) {
                 </div>
               </div>
             ))}
-            {isSending && (
-              <div className="flex justify-start">
-                <div className="border border-gray-200 rounded px-2.5 py-1.5 text-xs text-gray-400">
-                  Thinking...
-                </div>
-              </div>
-            )}
             <div ref={messagesEndRef} />
           </div>
 

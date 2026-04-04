@@ -31,6 +31,14 @@ export function ScanProvider({ children }) {
     setChatHistory((prev) => [...prev, { role, content }]);
   };
 
+  /** Update the content of the last message in global chat history (for streaming) */
+  const updateLastChatMessage = (content) => {
+    setChatHistory((prev) => {
+      const updated = [...prev];
+      updated[updated.length - 1] = { ...updated[updated.length - 1], content };
+      return updated;
+    });
+  };
 
   const getDeviceChat = (ip) => deviceChats[ip] || [];
 
@@ -41,18 +49,16 @@ export function ScanProvider({ children }) {
     }));
   };
 
-
-  /** Update the content of the last message in chat history (for streaming) */
-  const updateLastChatMessage = (content) => {
-    setChatHistory((prev) => {
-      const updated = [...prev];
-      updated[updated.length - 1] = { ...updated[updated.length - 1], content };
-      return updated;
+  /** Update the content of the last message in a device's chat history (for streaming) */
+  const updateLastDeviceChatMessage = (ip, content) => {
+    setDeviceChats((prev) => {
+      const history = [...(prev[ip] || [])];
+      history[history.length - 1] = { ...history[history.length - 1], content };
+      return { ...prev, [ip]: history };
     });
   };
 
   /** Clear everything */
-
   const resetAll = () => {
     setScanResults(null);
     setError(null);
@@ -73,9 +79,10 @@ export function ScanProvider({ children }) {
         setError,
         storeScanResults,
         addChatMessage,
+        updateLastChatMessage,
         getDeviceChat,
         addDeviceChatMessage,
-        updateLastChatMessage,
+        updateLastDeviceChatMessage,
         resetAll,
       }}
     >
