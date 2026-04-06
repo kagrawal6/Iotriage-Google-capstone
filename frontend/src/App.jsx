@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import UploadPage from "./pages/UploadPage";
 import ResultsPage from "./pages/ResultsPage";
 import ChatPage from "./pages/ChatPage";
+import ScanHistoryPage from "./pages/ScanHistoryPage";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/upload" element={<UploadPage />} />
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/chat" element={<ChatPage />} />
+          <Route path="/history" element={<ScanHistoryPage />} />
         </Routes>
       </main>
     </div>

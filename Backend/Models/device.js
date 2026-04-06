@@ -37,36 +37,46 @@ class Device {
   }
 
   /**
-   * Collects all CPE (Common Platform Enumeration) strings for this device.
-   * CPEs identify OS and software so we can query NVD for CVEs. Sources:
-   * - os_matches: OS guesses from Nmap (each match can have multiple CPEs).
-   * - open_ports: each listening service can have one or more CPEs (e.g. product version).
-   * Handles CPE stored as array (network_scan_script.py) or single string.
+   * Collects CPE (Common Platform Enumeration) strings for this device.
+   * CPEs identify OS and software so we can query NVD for CVEs.
    *
-   * @returns {Array<string>} Flat list of CPE strings for NVD lookup
+   * OS matches: only the single highest-accuracy match is used to avoid
+   * flooding NVD with redundant lookups for every OS candidate Nmap guessed.
+   *
+   * Open ports: all CPEs are included since each represents a distinct
+   * service/product version actually listening on the device.
+   *
+   * Handles CPE stored as array or single string. Deduplicates the result.
+   *
+   * @returns {Array<string>} Flat deduplicated list of CPE strings for NVD lookup
    */
   getCPEs() {
-    const cpes = [];
+    const cpes = new Set();
 
-    // OS detection: Nmap may return several OS candidates, each with CPE list
-    for (const os of this.osMatches) {
-      if (!os || !os.cpe) continue;
-      const cpeList = Array.isArray(os.cpe) ? os.cpe : [os.cpe];
-      for (const cpe of cpeList) {
-        if (cpe && typeof cpe === "string") cpes.push(cpe);
+    // OS detection: use only the highest-accuracy OS match
+    if (this.osMatches.length > 0) {
+      const bestMatch = this.osMatches.reduce((best, current) =>
+        parseInt(current.accuracy, 10) > parseInt(best.accuracy, 10) ? current : best
+      );
+
+      if (bestMatch.cpe) {
+        const cpeList = Array.isArray(bestMatch.cpe) ? bestMatch.cpe : [bestMatch.cpe];
+        for (const cpe of cpeList) {
+          if (cpe && typeof cpe === "string") cpes.add(cpe);
+        }
       }
     }
 
-    // Open ports: each port's service/product can have one or more CPEs
+    // Open ports: include all CPEs — each is a distinct service/product
     for (const port of this.openPorts) {
       if (!port || !port.cpe) continue;
       const cpeList = Array.isArray(port.cpe) ? port.cpe : [port.cpe];
       for (const cpe of cpeList) {
-        if (cpe && typeof cpe === "string") cpes.push(cpe);
+        if (cpe && typeof cpe === "string") cpes.add(cpe);
       }
     }
 
-    return cpes;
+    return [...cpes];
   }
 }
 
