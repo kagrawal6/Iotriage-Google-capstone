@@ -25,6 +25,20 @@ function parseScanToDevices(scanData) {
 
 exports.parseScanToDevices = parseScanToDevices;
 
+// Runs async tasks in small batches with a delay between batches
+async function batchedPromiseAll(items, batchSize, delayMs, fn) {
+  const results = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(fn));
+    results.push(...batchResults);
+    if (i + batchSize < items.length) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  return results;
+}
+
 // POST /api/upload — parses scan JSON, looks up CVEs, returns results
 exports.uploadScan = async (req, res) => {
   try {
@@ -32,15 +46,21 @@ exports.uploadScan = async (req, res) => {
 
     const devices = parseScanToDevices(scanData);
 
-    // Build all (device, cpe) pairs then fetch all CVEs in parallel
+    // Build all (device, cpe) pairs then fetch CVEs in parallel batches
+    // Batch size respects NVD rate limits: 4 without API key, 40 with
     const lookups = devices.flatMap(device =>
       device.getCPEs().map(cpe => ({ device, cpe }))
     );
 
-    const results = await Promise.all(
-      lookups.map(({ device, cpe }) =>
-        nvdService.fetchCVEs(cpe).then(cves => ({ device, cves }))
-      )
+    // Batch size and delay tuned to NVD rate limits: 50 req/30s with key, 5/30s without
+    const hasKey = Boolean(process.env.NVD_API_KEY);
+    const batchSize = hasKey ? 10 : 4;
+    const batchDelayMs = hasKey ? 2000 : 7000;
+    const results = await batchedPromiseAll(
+      lookups,
+      batchSize,
+      batchDelayMs,
+      ({ device, cpe }) => nvdService.fetchCVEs(cpe).then(cves => ({ device, cves }))
     );
 
     const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
