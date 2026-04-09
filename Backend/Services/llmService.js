@@ -310,3 +310,19 @@ exports.sendChatToLLM = async (chatHistory, userMessage, res, scanContext = null
     res.end();
   }
 };
+
+/**
+ * Generates mitigation for one vulnerability so frontend can request details
+ * on click instead of generating mitigations for the entire scan at upload time.
+ *
+ * @param {Object} vulnerability - { cveId, description, severity, cvssScore, deviceIp }
+ * @returns {Promise<Object>} One mitigation object
+ */
+exports.createMitigationForVulnerability = async (vulnerability) => {
+  if (!vulnerability || typeof vulnerability !== "object") {
+    throw new Error("Invalid vulnerability payload");
+  }
+
+  const [mitigation] = await exports.createMitigationSteps([vulnerability]);
+  return mitigation || null;
+};

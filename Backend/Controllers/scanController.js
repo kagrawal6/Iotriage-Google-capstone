@@ -84,26 +84,6 @@ exports.uploadScan = async (req, res) => {
       return (b.cvssScore ?? -1) - (a.cvssScore ?? -1);
     });
 
-    // Step 4: Ask LLM for mitigation steps per CVE
-    const mitigations = await llmService.createMitigationSteps(vulnerabilities);
-
-    // Step 5: Attach mitigation text to each vulnerability for the response
-    vulnerabilities = vulnerabilities.map(vuln => {
-      const match = mitigations.find(m => m.cveId === vuln.cveId);
-      if (match) {
-        return {
-          ...vuln,
-          mitigation: match.mitigation,
-          riskSummary: match.riskSummary || null,
-          priority: match.priority || null,
-          steps: match.steps || [],
-          verification: match.verification || null,
-          ransomwareWarning: match.ransomwareWarning || null,
-        };
-      }
-      return { ...vuln, mitigation: null };
-    });
-
     res.json({
       devices,
       vulnerabilities
@@ -116,5 +96,32 @@ exports.uploadScan = async (req, res) => {
       err.message && err.message.startsWith("Invalid ");
     const status = isBadRequest ? 400 : 500;
     res.status(status).json({ error: err.message || "Failed to process scan" });
+  }
+};
+
+/**
+ * POST /api/mitigation — Generates mitigation for one vulnerability on demand.
+ * Body can be either:
+ *   { vulnerability: { cveId, description, severity, cvssScore, deviceIp } }
+ * or:
+ *   { cveId, description, severity, cvssScore, deviceIp }
+ */
+exports.generateMitigation = async (req, res) => {
+  try {
+    const vulnerability = req.body?.vulnerability || req.body;
+
+    if (!vulnerability || typeof vulnerability !== "object") {
+      return res.status(400).json({ error: "Invalid vulnerability payload" });
+    }
+
+    if (!vulnerability.cveId || typeof vulnerability.cveId !== "string") {
+      return res.status(400).json({ error: "cveId is required" });
+    }
+
+    const mitigation = await llmService.createMitigationForVulnerability(vulnerability);
+    res.json({ mitigation });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to generate mitigation" });
   }
 };
