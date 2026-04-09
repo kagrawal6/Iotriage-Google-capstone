@@ -184,25 +184,34 @@ describe("Integration: CPE → NVD → Vulnerability → LLM mitigation", () => 
   it("CISA KEV data is included in LLM prompt when CVE is in the catalog", async () => {
     const capturedPrompts = [];
 
-    const { nvdService, llmService, cleanup } = loadServicesWithMocks({
-      nvdVulns: [
-        makeNvdVuln({ id: "CVE-2023-9999", description: "Known exploited vuln", score: 9.0, severity: "CRITICAL" }),
-      ],
-      cisaVulns: [
-        {
-          cveID: "CVE-2023-9999",
-          vendorProject: "Acme",
-          product: "Router",
-          shortDescription: "Used in the wild",
-          requiredAction: "Patch immediately",
-          knownRansomwareCampaignUse: "Known",
-        },
-      ],
-    });
+    delete require.cache[nvdServicePath];
+    delete require.cache[llmServicePath];
 
-    // Override generateContent to capture the prompt
-    const origLoad = Module._load;
+    const original = Module._load;
+
+    const nvdVulns = [
+      makeNvdVuln({ id: "CVE-2023-9999", description: "Known exploited vuln", score: 9.0, severity: "CRITICAL" }),
+    ];
+    const cisaVulns = [
+      {
+        cveID: "CVE-2023-9999",
+        vendorProject: "Acme",
+        product: "Router",
+        shortDescription: "Used in the wild",
+        requiredAction: "Patch immediately",
+        knownRansomwareCampaignUse: "Known",
+      },
+    ];
+
     Module._load = function (request, parent, isMain) {
+      if (request === "axios") {
+        return {
+          get: async (url) => {
+            if (url.includes("cisa.gov")) return { data: { vulnerabilities: cisaVulns } };
+            return makeNvdResponse(nvdVulns);
+          },
+        };
+      }
       if (request === "@google/generative-ai") {
         return {
           GoogleGenerativeAI: class {
@@ -231,8 +240,11 @@ describe("Integration: CPE → NVD → Vulnerability → LLM mitigation", () => 
           },
         };
       }
-      return origLoad(request, parent, isMain);
+      return original(request, parent, isMain);
     };
+
+    const nvdService = require(nvdServicePath);
+    const llmService = require(llmServicePath);
 
     try {
       const cves = await nvdService.fetchCVEs("cpe:2.3:a:acme:router:1.0:*:*:*:*:*:*:*");
@@ -241,6 +253,7 @@ describe("Integration: CPE → NVD → Vulnerability → LLM mitigation", () => 
       const mitigations = await llmService.createMitigationSteps(vulns);
 
       assert.equal(mitigations.length, 1);
+      assert.ok(capturedPrompts.length > 0, "generateContent should have been called");
       assert.ok(
         capturedPrompts[0].includes("CISA Known Exploited: YES"),
         "Prompt should include CISA KEV data"
@@ -251,8 +264,9 @@ describe("Integration: CPE → NVD → Vulnerability → LLM mitigation", () => 
       );
       assert.equal(mitigations[0].ransomwareWarning, "Known ransomware use");
     } finally {
-      Module._load = origLoad;
-      cleanup();
+      Module._load = original;
+      delete require.cache[nvdServicePath];
+      delete require.cache[llmServicePath];
     }
   });
 
