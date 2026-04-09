@@ -79,12 +79,13 @@ export default function HomePage() {
         The scanner is a desktop application that scans your local subnet using
         Nmap. Requires administrator/root privileges for OS detection.
       </p>
-      <button
-        disabled
-        className="border border-gray-300 bg-gray-100 text-gray-400 px-4 py-2 text-sm rounded cursor-not-allowed"
+      <a
+        href="/api/download/scanner"
+        download
+        className="inline-block border border-gray-400 hover:border-black text-black px-4 py-2 text-sm rounded"
       >
-        Download IoTriageScanner.exe (coming soon)
-      </button>
+        Download NetworkScannerWizard.exe
+      </a>
       <p className="text-xs text-gray-400 mt-2">
         Windows only &middot; Requires Nmap &middot;{" "}
         <a
