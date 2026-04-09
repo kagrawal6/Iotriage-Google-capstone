@@ -69,11 +69,16 @@ describe("ResultsPage", () => {
   });
 
   it("shows mitigation text on vulnerability cards", async () => {
-    await uploadAndNavigateToResults();
+    const user = await uploadAndNavigateToResults();
 
-    expect(
-      screen.getByText(/Apply patches and update software affected by CVE-2021-23017/)
-    ).toBeInTheDocument();
+    const generateButtons = screen.getAllByRole("button", {
+      name: /generate mitigation steps/i,
+    });
+    await user.click(generateButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Update nginx to the latest stable version/i)).toBeInTheDocument();
+    });
   });
 
   it("can switch to the Devices tab and see device cards", async () => {

@@ -1,5 +1,5 @@
 import { http, HttpResponse } from "msw";
-import { mockScanResponse, mockChatResponse } from "./mockData";
+import { mockScanResponse, mockChatResponse, mockMitigationResponse } from "./mockData";
 
 /**
  * MSW request handlers that mock the IoTriage backend API.
@@ -34,6 +34,20 @@ export const handlers = [
 
     return HttpResponse.json(mockChatResponse);
   }),
+
+  // POST /api/mitigation — returns one vulnerability mitigation plan
+  http.post("/api/mitigation", async ({ request }) => {
+    const { vulnerability } = await request.json();
+
+    if (!vulnerability?.cveId) {
+      return HttpResponse.json(
+        { error: "cveId is required" },
+        { status: 400 }
+      );
+    }
+
+    return HttpResponse.json(mockMitigationResponse);
+  }),
 ];
 
 /**
@@ -50,6 +64,13 @@ export const errorHandlers = [
   http.post("/api/chat", () => {
     return HttpResponse.json(
       { error: "LLM request failed" },
+      { status: 500 }
+    );
+  }),
+
+  http.post("/api/mitigation", () => {
+    return HttpResponse.json(
+      { error: "Failed to generate mitigation" },
       { status: 500 }
     );
   }),

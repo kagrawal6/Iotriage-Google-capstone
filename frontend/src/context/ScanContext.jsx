@@ -140,6 +140,28 @@ export function ScanProvider({ children }) {
     });
   };
 
+  // ── vulnerability updates (persisted in scanHistory localStorage) ─────────
+  const updateVulnerabilityMitigation = (target, mitigationData) => {
+    if (!target?.cveId || !target?.deviceIp || !mitigationData) return;
+
+    updateActiveScan((s) => ({
+      vulnerabilities: (s.vulnerabilities || []).map((v) => {
+        const isMatch = v.cveId === target.cveId && v.deviceIp === target.deviceIp;
+        if (!isMatch) return v;
+
+        return {
+          ...v,
+          mitigation: mitigationData.mitigation || mitigationData.steps?.join("\n") || null,
+          riskSummary: mitigationData.riskSummary || null,
+          priority: mitigationData.priority || null,
+          steps: Array.isArray(mitigationData.steps) ? mitigationData.steps : [],
+          verification: mitigationData.verification || null,
+          ransomwareWarning: mitigationData.ransomwareWarning || null,
+        };
+      }),
+    }));
+  };
+
   // ── clear everything ──────────────────────────────────────────────────────
   const resetAll = () => {
     setScanHistory([]);
@@ -174,6 +196,7 @@ export function ScanProvider({ children }) {
         getDeviceChat,
         addDeviceChatMessage,
         updateLastDeviceChatMessage,
+        updateVulnerabilityMitigation,
         resetAll,
       }}
     >

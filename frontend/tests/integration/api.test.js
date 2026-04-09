@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
 import { setupServer } from "msw/node";
 import { handlers, errorHandlers } from "../helpers/msw-handlers";
-import { mockScanInput, mockScanResponse, mockChatResponse } from "../helpers/mockData";
-import { uploadScan, sendChatMessage } from "../../src/services/api";
+import { mockScanInput, mockScanResponse, mockMitigationResponse } from "../helpers/mockData";
+import { uploadScan, fetchMitigation } from "../../src/services/api";
 
 // ── MSW server setup ──
 const server = setupServer(...handlers);
@@ -30,14 +30,14 @@ describe("API Service Layer", () => {
       expect(device.openPorts).toHaveLength(2);
     });
 
-    it("returns vulnerabilities with CVE IDs and mitigations", async () => {
+    it("returns vulnerabilities with CVE IDs and no pre-generated mitigation", async () => {
       const result = await uploadScan(mockScanInput);
 
       const vuln = result.vulnerabilities[0];
       expect(vuln.cveId).toBe("CVE-2021-23017");
       expect(vuln.severity).toBe("HIGH");
       expect(vuln.deviceIp).toBe("192.168.1.1");
-      expect(vuln.mitigation).toBeTruthy();
+      expect(vuln.mitigation).toBeUndefined();
     });
 
     it("throws an error when backend returns 500", async () => {
@@ -47,21 +47,23 @@ describe("API Service Layer", () => {
     });
   });
 
-  describe("sendChatMessage()", () => {
-    it("sends a message and returns AI reply", async () => {
-      const history = [{ role: "user", content: "Hello" }];
-      const result = await sendChatMessage(history, "What is CVE-2021-23017?");
+  describe("fetchMitigation()", () => {
+    it("returns mitigation for one vulnerability", async () => {
+      const result = await fetchMitigation({
+        cveId: "CVE-2021-23017",
+        severity: "HIGH",
+        description: "Nginx resolver issue",
+        deviceIp: "192.168.1.1",
+      });
 
-      expect(result).toEqual(mockChatResponse);
-      expect(result.reply).toContain("CVE-2021-23017");
+      expect(result).toEqual(mockMitigationResponse.mitigation);
+      expect(result.cveId).toBe("CVE-2021-23017");
     });
 
     it("throws an error when backend returns 500", async () => {
       server.use(...errorHandlers);
 
-      await expect(
-        sendChatMessage([], "Hello")
-      ).rejects.toThrow(/failed/i);
+      await expect(fetchMitigation({ cveId: "CVE-2021-23017" })).rejects.toThrow(/failed/i);
     });
   });
 });

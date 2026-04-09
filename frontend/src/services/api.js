@@ -30,6 +30,28 @@ export async function uploadScan(scanJson) {
 }
 
 /**
+ * Requests mitigation guidance for a single vulnerability.
+ *
+ * @param {Object} vulnerability - { cveId, description, severity, cvssScore, deviceIp }
+ * @returns {Promise<Object|null>} mitigation payload from backend
+ */
+export async function fetchMitigation(vulnerability) {
+  const res = await fetch(`${API_BASE}/mitigation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ vulnerability }),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || `Mitigation request failed (HTTP ${res.status})`);
+  }
+
+  const data = await res.json();
+  return data.mitigation || null;
+}
+
+/**
  * Sends a chat message (with full conversation history) to the backend LLM.
  * Includes optional scan context so backend can ground AI answers.
  *

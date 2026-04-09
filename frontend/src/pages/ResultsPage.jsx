@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useScan } from "../context/ScanContext";
+import { fetchMitigation } from "../services/api";
 import DeviceCard from "../components/DeviceCard";
 import VulnerabilityCard from "../components/VulnerabilityCard";
 
@@ -8,8 +9,10 @@ import VulnerabilityCard from "../components/VulnerabilityCard";
  * ResultsPage — Displays devices and vulnerabilities from scan analysis.
  */
 export default function ResultsPage() {
-  const { scanResults } = useScan();
+  const { scanResults, updateVulnerabilityMitigation } = useScan();
   const [activeTab, setActiveTab] = useState("vulnerabilities");
+  const [loadingMitigations, setLoadingMitigations] = useState({});
+  const [mitigationErrors, setMitigationErrors] = useState({});
 
   if (!scanResults) {
     return <Navigate to="/upload" replace />;
@@ -30,6 +33,27 @@ export default function ResultsPage() {
         ? "border-black font-bold"
         : "border-transparent text-gray-500 hover:text-black"
     }`;
+
+  const getVulnKey = (vuln) => `${vuln.cveId}::${vuln.deviceIp || "unknown"}`;
+
+  const handleGenerateMitigation = async (vuln) => {
+    const key = getVulnKey(vuln);
+    if (!vuln?.cveId || loadingMitigations[key] || vuln.mitigation) return;
+
+    setLoadingMitigations((prev) => ({ ...prev, [key]: true }));
+    setMitigationErrors((prev) => ({ ...prev, [key]: null }));
+
+    try {
+      const mitigation = await fetchMitigation(vuln);
+      if (mitigation) {
+        updateVulnerabilityMitigation(vuln, mitigation);
+      }
+    } catch (err) {
+      setMitigationErrors((prev) => ({ ...prev, [key]: err.message || "Failed to load mitigation" }));
+    } finally {
+      setLoadingMitigations((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -99,6 +123,9 @@ export default function ResultsPage() {
               <VulnerabilityCard
                 key={vuln.cveId + "-" + i}
                 vulnerability={vuln}
+                isGenerating={Boolean(loadingMitigations[getVulnKey(vuln)])}
+                generationError={mitigationErrors[getVulnKey(vuln)] || null}
+                onGenerateMitigation={() => handleGenerateMitigation(vuln)}
               />
             ))
           )}

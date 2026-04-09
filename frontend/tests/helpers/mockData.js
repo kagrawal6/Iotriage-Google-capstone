@@ -114,18 +114,30 @@ export const mockScanResponse = {
         "A security issue in nginx resolver could allow an attacker to cause a worker process crash.",
       severity: "HIGH",
       deviceIp: "192.168.1.1",
-      mitigation:
-        "Apply patches and update software affected by CVE-2021-23017.",
     },
     {
       cveId: "CVE-2019-9516",
       description: "HTTP/2 implementation in nginx is vulnerable to header leaks.",
       severity: "MEDIUM",
       deviceIp: "192.168.1.1",
-      mitigation:
-        "Apply patches and update software affected by CVE-2019-9516.",
     },
   ],
+};
+
+export const mockMitigationResponse = {
+  mitigation: {
+    cveId: "CVE-2021-23017",
+    deviceIp: "192.168.1.1",
+    riskSummary: "Attackers may crash nginx worker processes remotely.",
+    priority: "HIGH",
+    steps: [
+      "Update nginx to the latest stable version from the vendor.",
+      "Restart nginx after the update.",
+    ],
+    verification: "Check nginx version and confirm service health.",
+    ransomwareWarning: null,
+    mitigation: "Update nginx and restart the service.",
+  },
 };
 
 /** Mock chat response from POST /api/chat */
