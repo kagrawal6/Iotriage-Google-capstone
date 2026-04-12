@@ -69,6 +69,45 @@ async function getCisaKevMap() {
   }
 }
 
+// ── Expertise mode tone instructions ───────────────────────────────────────
+
+/**
+ * Maps expertiseMode → tone instructions injected into every LLM prompt.
+ * "intermediate" is the safe default for legacy calls that don't pass a mode.
+ */
+const EXPERTISE_TONE = {
+  beginner: `
+...
+STRICT OUTPUT RULES for beginner:
+- Maximum 5 steps total. Combine related actions.
+- Step 1 must always be: what this means for them in one plain sentence (no CVE IDs).
+- Assume iPhone/iPad unless evidence suggests otherwise. Don't list every device type.
+- Never use these words without defining them inline: IP address, vulnerability, 
+  patch, firmware, exploit, CVE, CVSS, configuration, protocol.
+- Each step must be one short paragraph. No sub-bullets.`,
+
+intermediate: `
+...
+STRICT OUTPUT RULES for intermediate:
+- 5-8 steps is ideal.
+- Lead with a 1-sentence risk statement that names the attack vector.
+- Use the CVE ID and CVSS score. Briefly explain what CVSS 9.8 means (critical, remotely exploitable).
+- Explain what CFPreferences is and what an attacker gains by exploiting this.
+- Remediation steps can assume the user knows how to navigate Settings.`,
+
+expert: `
+...
+STRICT OUTPUT RULES for expert:
+- Lead with: affected versions, CVSSv3 vector string, attack vector, privileges required.
+- Include the exact minimum patched versions (iOS 11.3, macOS 10.13.4, etc.).
+- Note that CFPreferences config-profile persistence bypass could allow MDM profile 
+  injection — call out the MDM/enterprise risk specifically.
+- Steps should be terse. No "why" explanations.
+- Include verification commands where applicable (e.g. sw_vers on macOS).`,
+};
+
+
+
 // ── Prompt builders ─────────────────────────────────────────────────────────
 
 /**
@@ -76,9 +115,11 @@ async function getCisaKevMap() {
  * Incorporates CISA data when available to ground the response.
  * @param {Array<Object>} vulnerabilities - Vulnerability objects with cveId, description, severity, cvssScore, deviceIp
  * @param {Map<string, Object>} kevMap - CISA KEV lookup map
+ * @param {string} expertiseMode - "beginner" | "intermediate" | "expert"
  * @returns {string} Formatted prompt
  */
-function buildMitigationPrompt(vulnerabilities, kevMap) {
+function buildMitigationPrompt(vulnerabilities, kevMap, expertiseMode = "intermediate") {
+  const tone = EXPERTISE_TONE[expertiseMode] || EXPERTISE_TONE.intermediate;
   const vulnSections = vulnerabilities.map((v, i) => {
     const kevData = kevMap.get(v.cveId);
     let section = `
@@ -99,9 +140,12 @@ function buildMitigationPrompt(vulnerabilities, kevMap) {
     return section;
   });
 
-  return `You are IoTriage, a cybersecurity assistant that helps home and small-business users secure their networks. You must explain things clearly for people who are NOT IT professionals.
+  return `You are IoTriage, a cybersecurity assistant that helps home and small-business users secure their networks.
 
-A network scan found the following vulnerabilities on the user's devices. For each vulnerability, provide **clear, step-by-step mitigation instructions** that a non-technical person can follow.
+**Your communication style for this session:**
+${tone}
+
+A network scan found the following vulnerabilities on the user's devices. For each vulnerability, provide **clear, step-by-step mitigation instructions** matched to the communication style above.
 
 **Rules:**
 1. Use simple, jargon-free language. If you must use a technical term, briefly define it.
@@ -136,19 +180,23 @@ Respond in valid JSON with the following structure (no markdown code fences):
 /**
  * Builds the system instruction for the follow-up chat.
  * @param {Object|null} scanContext - Optional scan data to ground the chat
+ * @param {string} expertiseMode - "beginner" | "intermediate" | "expert"
  * @returns {string}
  */
-function buildChatSystemInstruction(scanContext) {
-  let instruction = `You are IoTriage, a friendly cybersecurity assistant that helps home and small-business users understand and fix network vulnerabilities. 
+function buildChatSystemInstruction(scanContext, expertiseMode = "intermediate") {
+  const tone = EXPERTISE_TONE[expertiseMode] || EXPERTISE_TONE.intermediate;
 
-**Rules:**
-1. Always use simple, non-technical language. Define any technical terms you use.
-2. Be concise but thorough.
-3. If the user asks about a specific CVE or device, reference the scan data provided.
-4. If you don't know something, say so honestly rather than guessing.
-5. Never recommend disabling security features as a fix.
-6. When suggesting actions, give step-by-step instructions.
-7. Respond in clean plain text only (no markdown symbols like #, *, or backticks).`;
+  let instruction = `You are IoTriage, a cybersecurity assistant that helps home and small-business users understand and fix network vulnerabilities.
+
+**Your communication style for this session:**
+${tone}
+
+**Additional rules:**
+1. If the user asks about a specific CVE or device, reference the scan data provided.
+2. If you don't know something, say so honestly rather than guessing.
+3. Never recommend disabling security features as a fix.
+4. When suggesting actions, give step-by-step instructions.
+5. Respond in clean plain text only (no markdown symbols like #, *, or backticks).`;
 
   if (scanContext) {
     instruction += `\n\n**The user's network scan found the following data — use it to answer their questions:**\n${JSON.stringify(scanContext, null, 2)}`;
@@ -198,9 +246,10 @@ function normalizeChatHistory(chatHistory) {
  * @param {Array<Object>} vulnerabilities - Array of Vulnerability-like objects
  *   Each must have: { cveId, description, severity, deviceIp }
  *   Optional: { cvssScore }
+ * @param {string} expertiseMode - "beginner" | "intermediate" | "expert"
  * @returns {Promise<Array<Object>>} Mitigation objects keyed by CVE ID
  */
-exports.createMitigationSteps = async (vulnerabilities) => {
+exports.createMitigationSteps = async (vulnerabilities, expertiseMode = "intermediate") => {
   if (!vulnerabilities || vulnerabilities.length === 0) {
     return [];
   }
@@ -211,8 +260,8 @@ exports.createMitigationSteps = async (vulnerabilities) => {
     // 1. Fetch CISA KEV data for grounding
     const kevMap = await getCisaKevMap();
 
-    // 2. Build prompt with all vulnerabilities
-    const prompt = buildMitigationPrompt(vulnerabilities, kevMap);
+    // 2. Build prompt with all vulnerabilities + expertise tone
+    const prompt = buildMitigationPrompt(vulnerabilities, kevMap, expertiseMode);
 
     // 3. Call Gemini
     const result = await model.generateContent(prompt);
@@ -271,13 +320,14 @@ exports.createMitigationSteps = async (vulnerabilities) => {
  * @param {string} userMessage - The new message from the user
  * @param {Response} res - Write LLM response to this and end when response is done
  * @param {Object|null} scanContext - Optional: { devices, vulnerabilities } from the scan
+ * @param {string} expertiseMode - "beginner" | "intermediate" | "expert"
  */
-exports.sendChatToLLM = async (chatHistory, userMessage, res, scanContext = null) => {
-  console.log("[LLM] Processing chat message...");
+exports.sendChatToLLM = async (chatHistory, userMessage, res, scanContext = null, expertiseMode = "intermediate") => {
+  console.log(`[LLM] Processing chat message (mode: ${expertiseMode})...`);
 
   try {
-    // Build system instruction with optional scan context
-    const systemInstruction = buildChatSystemInstruction(scanContext);
+    // Build system instruction with scan context + expertise tone
+    const systemInstruction = buildChatSystemInstruction(scanContext, expertiseMode);
     const normalizedHistory = normalizeChatHistory(chatHistory);
 
     // Create a chat-tuned model instance with the system instruction
