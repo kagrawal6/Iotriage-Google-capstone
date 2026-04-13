@@ -5,7 +5,8 @@
  *
  * Responsibilities:
  *  - Query the NVD CVE API using a CPE string
- *  - For versioned CPEs, use virtualMatchString + versionStart/versionEnd
+ *  - For versioned CPEs, use cpeName; for wildcard CPEs, use virtualMatchString
+ *  - Pre-filter by severity on the NVD side to reduce junk results
  *  - Normalize CVE records into a simplified internal structure
  *  - Rank vulnerabilities by severity/score/date
  *  - Return the top N vulnerabilities
@@ -45,10 +46,11 @@ function parseCpe23(cpe) {
  *   NVD accepts partial cpeName strings up to the version component.
  * - Wildcard / missing version    → virtualMatchString = full 13-component CPE
  *   virtualMatchString does prefix matching and doesn't require dictionary membership.
+ *
+ * We also pass severity filters to reduce the volume of Deferred/low-signal
+ * CVEs that NVD returns, which cuts down on client-side skips and extra pages.
  */
-const CVE_LOOKBACK_YEARS = 10;
-
-function buildNvdQueryParams(cpe, startIndex, resultsPerPage) {
+function buildNvdQueryParams(cpe, startIndex, resultsPerPage, severities) {
   const { part, vendor, product, version } = parseCpe23(cpe);
   const hasConcreteVersion = version && version !== "*" && version !== "-";
 
@@ -62,7 +64,19 @@ function buildNvdQueryParams(cpe, startIndex, resultsPerPage) {
   };
 
   if (hasConcreteVersion) {
+    // cpeName requires dictionary membership but is precise for known versions
     params.cpeName = `cpe:2.3:${part}:${vendor}:${product}:${version}`;
+  } else {
+    // virtualMatchString does prefix matching and works for wildcard CPEs;
+    // without this, wildcard queries return a flood of unrelated CVEs
+    params.virtualMatchString = `cpe:2.3:${part}:${vendor}:${product}:*:*:*:*:*:*:*`;
+  }
+
+  // Pre-filter by severity on the NVD side to avoid fetching and skipping
+  // large volumes of LOW / NONE / Deferred entries client-side.
+  // We issue separate requests per severity level (NVD only accepts one at a time).
+  if (severities && severities.length === 1) {
+    params.cvssV3Severity = severities[0];
   }
 
   return params;
@@ -192,8 +206,8 @@ function normalizeCve(vuln) {
 /**
  * Check whether a CPE criteria string matches our queried CPE.
  * Compares part, vendor, and product — treats "*" as a wildcard that matches
- * anything.  Version matching is left to NVD (it already filtered by version
- * via cpeName / versionStart / versionEnd in the API query).
+ * anything. Version matching is left to NVD (it already filtered by version
+ * via cpeName / virtualMatchString in the API query).
  */
 function cpeMatchesQuery(criteria, queriedCpe) {
   if (!criteria || !queriedCpe) return false;
@@ -287,12 +301,15 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * NVD rate limits: 5 requests / 30 s without an API key, 50 / 30 s with one.
- * We wait between paginated requests to stay well inside both limits.
+ * We only sleep between paginated requests (not after the final page) to avoid
+ * unnecessary delay when a single page satisfies the query.
  * On a 429 we back off and retry once before giving up.
  */
 async function nvdGet(url, params, headers, isAuthenticated) {
-  const INTER_PAGE_DELAY_MS = isAuthenticated ? 700 : 6500; // ~50/30s vs ~4/30s
-  const MAX_RETRIES = 1; // TODO: re-enable retry (set back to 2)
+
+  const INTER_PAGE_DELAY_MS = isAuthenticated ? 600 : 6500; // ~50/30s vs ~4/30s
+  const MAX_RETRIES = 2;
+
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -303,22 +320,83 @@ async function nvdGet(url, params, headers, isAuthenticated) {
       }
 
       const response = await axios.get(url, { headers, params });
-
-      // Successful response — wait before next call to respect rate limits
-      await sleep(INTER_PAGE_DELAY_MS);
-      return response;
+      return { response, interPageDelayMs: INTER_PAGE_DELAY_MS };
     } catch (err) {
-      // axios throws on non-2xx — check if it's a 429 we can retry
       if (err.response?.status === 429 && attempt < MAX_RETRIES - 1) {
         console.warn(`[NVD] 429 on attempt ${attempt + 1}/${MAX_RETRIES}`);
-        continue; // retry after backoff on next iteration
+        continue;
       }
-      // Not a 429, or out of retries — let it bubble up
       throw err;
     }
   }
 }
 
+/**
+ * Fetch CVEs for a single severity tier, paginating as needed.
+ * Sleeps between pages but NOT after the last page, so the caller
+ * can chain severity tiers without an extra delay.
+ */
+async function fetchCvesBySeverity(
+  cpe,
+  severity,
+  { headers, isAuthenticated, maxToFetch, resultsPerPage }
+) {
+  const cves = [];
+  let startIndex = 0;
+
+  while (cves.length < maxToFetch) {
+    const params = buildNvdQueryParams(cpe, startIndex, resultsPerPage, [severity]);
+
+    const { response, interPageDelayMs } = await nvdGet(
+      NVD_BASE,
+      params,
+      headers,
+      isAuthenticated
+    );
+
+    const data = response.data || {};
+    const vulns = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
+    const total = Number(data.totalResults || 0);
+
+    for (const vuln of vulns) {
+      const cveId = vuln?.cve?.id || "unknown";
+      const status = vuln?.cve?.vulnStatus;
+
+      if (status !== "Analyzed" && status !== "Modified") {
+        console.log(`[NVD Filter] Skipping ${cveId} — vulnStatus: ${status}`);
+        continue;
+      }
+
+      if (shouldDiscardPlatformMatch(vuln?.cve || {}, cpe)) continue;
+
+      const normalized = normalizeCve(vuln);
+      if (!normalized) continue;
+
+      cves.push(normalized);
+      if (cves.length >= maxToFetch) break;
+    }
+
+    startIndex += vulns.length;
+    const hasMorePages = vulns.length > 0 && startIndex < total;
+
+    // Only sleep if we actually need to fetch another page
+    if (hasMorePages && cves.length < maxToFetch) {
+      await sleep(interPageDelayMs);
+    } else {
+      break;
+    }
+  }
+
+  return cves;
+}
+
+/**
+ * Fetch CVEs across severity tiers (CRITICAL → HIGH → MEDIUM → LOW),
+ * stopping as soon as we have enough to satisfy maxToFetch.
+ *
+ * This avoids fetching and skipping large volumes of low-severity / Deferred
+ * entries — the main source of unnecessary pages and delays.
+ */
 async function getCvesByCpe(
   cpe,
   {
@@ -333,55 +411,41 @@ async function getCvesByCpe(
   }
 
   const isAuthenticated = Boolean(apiKey);
-  const cves = [];
-  let startIndex = 0;
-  const perPage = Math.min(resultsPerPage, maxToFetch);
+  const headers = {
+    accept: "application/json",
+    ...(apiKey ? { apiKey } : {})
+  };
 
-  while (cves.length < maxToFetch) {
-    const params = buildNvdQueryParams(cpe, startIndex, perPage);
-    const headers = {
-      accept: "application/json",
-      ...(apiKey ? { apiKey } : {})
-    };
+  // Fetch from highest to lowest severity, stopping when we have enough.
+  // This minimises API calls because CRITICAL/HIGH CVEs are far less likely
+  // to be Deferred, so the skip rate per page is much lower.
+  const SEVERITY_TIERS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
-    const response = await nvdGet(NVD_BASE, params, headers, isAuthenticated);
+  const allCves = [];
+  const seenIds = new Set();
 
-    const data = response.data || {};
-    const vulns = Array.isArray(data.vulnerabilities) ? data.vulnerabilities : [];
-    const total = Number(data.totalResults || 0);
+  for (const severity of SEVERITY_TIERS) {
+    if (allCves.length >= maxToFetch) break;
 
-    for (const vuln of vulns) {
-      const cveId = vuln?.cve?.id || "unknown";
-      const status = vuln?.cve?.vulnStatus;
+    const remaining = maxToFetch - allCves.length;
+    console.log(`[NVD] Fetching ${severity} CVEs for ${cpe} (need ${remaining} more)`);
 
-      // Only keep CVEs that have been fully reviewed by NVD.
-      // "Deferred" entries are deprioritized (often older/less critical);
-      // other statuses like "Modified" or "Awaiting Analysis" are incomplete.
-      // TODO: keep modified but depriotize?
-      if (status !== "Analyzed" && status !== "Modified") {
-        console.log(`[NVD Filter] Skipping ${cveId} — vulnStatus: ${status}`);
-        continue;
+    const tieredCves = await fetchCvesBySeverity(cpe, severity, {
+      headers,
+      isAuthenticated,
+      maxToFetch: remaining,
+      resultsPerPage: Math.min(resultsPerPage, remaining)
+    });
+
+    for (const cve of tieredCves) {
+      if (!seenIds.has(cve.cveId)) {
+        seenIds.add(cve.cveId);
+        allCves.push(cve);
       }
-
-      // Discard CVEs where our CPE only matched as a non-vulnerable platform
-      // (vulnerable: false) and the real bug is in another component
-      // (vulnerable: true) that we can't verify.
-      if (shouldDiscardPlatformMatch(vuln?.cve || {}, cpe)) continue;
-
-      const normalized = normalizeCve(vuln);
-      if (!normalized) continue;
-
-      cves.push(normalized);
-
-      if (cves.length >= maxToFetch) break;
     }
-
-    startIndex += vulns.length;
-
-    if (vulns.length === 0 || startIndex >= total) break;
   }
 
-  const ranked = sortCves(cves);
+  const ranked = sortCves(allCves);
   return selectTopVulnerabilities(ranked, maxToReturn);
 }
 
