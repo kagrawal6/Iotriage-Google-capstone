@@ -1,65 +1,32 @@
 # IoTriage
 
-IoTriage is a network vulnerability scanner for IoT devices. It scans your local network using Nmap, identifies connected devices and their open services, looks up known vulnerabilities (CVEs) via the NVD, and provides AI-powered remediation guidance through a web interface.
+Scan your network with Nmap, look up CVEs, and get AI remediation help in a web UI.
 
-The project has three layers:
-1. **Scanner** — A Python script (`network_scan_script.py`) that runs Nmap on your local subnet and outputs `scan_results.json`.
-2. **Frontend** — A React web app where users upload scan results, view devices and vulnerabilities, and chat with an AI advisor.
-3. **Backend** — A Node.js/Express API that parses device data, queries the NVD for CVEs, and generates mitigation steps via an LLM.
+**Parts:** Python scanner (`network_scan_script.py` or optional `gui_app.py`) → upload `scan_results.json` → React frontend → Express backend (NVD + Gemini).
 
-## Prerequisites
+## Setup
 
-- [Node.js](https://nodejs.org/) (v18+)
-- [Nmap](https://nmap.org/download) installed on your machine
-- Python 3.10+ (for the scanner script)
+- Node 18+, Nmap on your PATH, Python 3.10+ if you use the script directly.
 
-## Running the Backend
-
-```bash
-cd Backend
-npm install
-node app.js
-```
-
-Before starting, create a `Backend/.env` file with your Gemini API key:
+Put secrets in **`Backend/.env`**:
 
 ```
-GEMINI_API_KEY=your_key_here
+GEMINI_API_KEY=...
+NVD_API_KEY=...
 ```
 
-You can get a key from [Google AI Studio](https://aistudio.google.com/apikey). The backend starts on `http://localhost:3000`.
+(`NVD_API_KEY` is optional; helps with NVD rate limits.)
 
-## Running the Frontend
+## Run locally
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+**Backend** — `cd Backend`, `npm install`, `node app.js` (port 3000).
 
-The frontend starts on `http://localhost:5173` and proxies `/api` requests to the backend.
+**Frontend** — `cd frontend`, `npm install`, `npm run dev` (Vite proxies `/api` to the backend).
 
-## Running the Network Scanner
+**Windows scanner** — With both running, use **Download NetworkScannerWizard.exe** on the homepage. For a public deploy, serve frontend and backend together so downloads and API calls still work.
 
-```bash
-python -m venv scanner_env
-source scanner_env/bin/activate        # Linux/Mac
-scanner_env\bin\activate               # Windows (Git Bash / MSYS2)
-# scanner_env\Scripts\activate.ps1     # Windows (PowerShell, if execution policy allows)
+**Python scan** — `pip install python-nmap cpe`, then `python network_scan_script.py`. Needs admin for OS detection. Outputs `scan_results.json`; upload it in the app.
 
-pip install python-nmap cpe
-python network_scan_script.py
-```
+## Tests
 
-The script auto-detects your local IP, scans the `/24` subnet, and saves results to `scan_results.json`. Upload that file through the frontend to analyze your network.
-
-**Note:** OS detection (`-O` flag) requires administrator/root privileges.
-
-## Running Tests
-
-```bash
-cd frontend
-npm test
-```
-
-Runs 34 integration tests covering the API layer, all pages, and the chat flow.
+`cd frontend && npm test` · `cd Backend && npm test`
