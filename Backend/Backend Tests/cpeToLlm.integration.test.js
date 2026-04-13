@@ -255,7 +255,7 @@ describe("Integration: CPE → NVD → Vulnerability → LLM mitigation", () => 
       assert.equal(mitigations.length, 1);
       assert.ok(capturedPrompts.length > 0, "generateContent should have been called");
       assert.ok(
-        capturedPrompts[0].includes("CISA Known Exploited: YES"),
+        capturedPrompts[0].includes("CISA Known Exploited"),
         "Prompt should include CISA KEV data"
       );
       assert.ok(

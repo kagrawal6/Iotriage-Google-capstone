@@ -46,22 +46,25 @@ exports.uploadScan = async (req, res) => {
 
     const devices = parseScanToDevices(scanData);
 
-    // Build all (device, cpe) pairs then fetch CVEs in parallel batches
-    // Batch size respects NVD rate limits: 4 without API key, 40 with
     const lookups = devices.flatMap(device =>
       device.getCPEs().map(cpe => ({ device, cpe }))
     );
 
-    // Batch size and delay tuned to NVD rate limits: 50 req/30s with key, 5/30s without
     const hasKey = Boolean(process.env.NVD_API_KEY);
     const batchSize = hasKey ? 10 : 4;
     const batchDelayMs = hasKey ? 2000 : 7000;
+
+    console.log(`[Scan] ${devices.length} devices, ${lookups.length} CPEs, key=${hasKey}, batchSize=${batchSize}`);
+    const t0 = Date.now();
+
     const results = await batchedPromiseAll(
       lookups,
       batchSize,
       batchDelayMs,
       ({ device, cpe }) => nvdService.fetchCVEs(cpe).then(cves => ({ device, cves }))
     );
+
+    console.log(`[Scan] NVD lookups done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
     const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
     const vulnerabilities = results
