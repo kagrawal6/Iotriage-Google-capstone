@@ -84,8 +84,36 @@ exports.uploadScan = async (req, res) => {
       return (b.cvssScore ?? -1) - (a.cvssScore ?? -1);
     });
 
-    // Step 4: Ask LLM for mitigation steps per CVE
-    const mitigations = await llmService.createMitigationSteps(vulnerabilities);
+    // Step 3b: Enrich each vulnerability with the best OS match from its device.
+    // This lets the LLM write mitigation steps for the specific detected device
+    // rather than hedging across every possible Apple/Linux/Windows variant.
+    const deviceMap = new Map(
+      devices.map((d) => [d.ipAddress || d.ip_address, d])
+    );
+
+    vulnerabilities = vulnerabilities.map((vuln) => {
+      const device = deviceMap.get(vuln.deviceIp);
+      const osMatches = device?.osMatches || device?.os_matches || [];
+
+      const bestOs =
+        osMatches.length > 0
+          ? osMatches.reduce((a, b) =>
+              parseInt(b.accuracy) > parseInt(a.accuracy) ? b : a
+            )
+          : null;
+
+      return {
+        ...vuln,
+        bestOsName: bestOs?.name || null,
+        bestOsAccuracy: bestOs ? parseInt(bestOs.accuracy) : null,
+        deviceType: device?.deviceType || device?.device_type || null,
+      };
+    });
+
+    // Step 4: Ask LLM for mitigation steps per CVE.
+    // expertiseMode is sent by the frontend upload form ("beginner" | "intermediate" | "expert").
+    const expertiseMode = req.body?.expertiseMode || "intermediate";
+    const mitigations = await llmService.createMitigationSteps(vulnerabilities, expertiseMode);
 
     // Step 5: Attach mitigation text to each vulnerability for the response
     vulnerabilities = vulnerabilities.map(vuln => {
