@@ -71,8 +71,8 @@ export default function FileUploader({ onFileLoaded, isLoading }) {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         data-testid="file-dropzone"
-        className={`border-2 border-dashed rounded p-10 text-center cursor-pointer ${
-          isDragging ? "border-black bg-gray-50" : "border-gray-300 hover:border-gray-500"
+        className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${
+          isDragging ? "border-blue-500 bg-blue-50" : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
         } ${isLoading ? "opacity-50 pointer-events-none" : ""}`}
       >
         <input
@@ -86,27 +86,40 @@ export default function FileUploader({ onFileLoaded, isLoading }) {
 
         {fileName ? (
           <div>
-            <p className="text-sm font-medium text-green-700">
-              Selected: {fileName}
+            <div className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-green-700">
+              {fileName}
             </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Click or drop to replace
             </p>
           </div>
         ) : (
           <div>
-            <p className="text-sm font-medium mb-1">
+            <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <p className="text-sm font-semibold text-slate-700 mb-1">
               Drop scan_results.json here or click to browse
             </p>
-            <p className="text-xs text-gray-400">JSON files only — max 10 MB</p>
+            <p className="text-xs text-slate-400">JSON files only — max 10 MB</p>
           </div>
         )}
       </div>
 
       {fileError && (
-        <p className="mt-2 text-sm text-red-600" role="alert">
+        <div className="mt-3 flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {fileError}
-        </p>
+        </div>
       )}
     </div>
   );
