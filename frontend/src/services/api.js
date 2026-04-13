@@ -30,6 +30,28 @@ export async function uploadScan(scanJson) {
 }
 
 /**
+ * Fetches LLM-generated mitigation steps for a single vulnerability on demand.
+ * Triggered when the user clicks "Generate Mitigation Steps" on a vulnerability card.
+ *
+ * @param {Object} vulnerability - { cveId, description, severity, cvssScore, deviceIp }
+ * @returns {Promise<Object>} Mitigation object with steps, riskSummary, verification, etc.
+ */
+export async function fetchMitigation(vulnerability) {
+  const res = await fetch(`${API_BASE}/mitigation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(vulnerability),
+  });
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(errBody.error || `Mitigation request failed (HTTP ${res.status})`);
+  }
+
+  return res.json();
+}
+
+/**
  * Sends a chat message (with full conversation history) to the backend LLM.
  * Includes optional scan context so backend can ground AI answers.
  *
