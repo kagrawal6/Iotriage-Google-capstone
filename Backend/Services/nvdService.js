@@ -54,14 +54,7 @@ function buildNvdQueryParams(cpe, startIndex, resultsPerPage, severities) {
   const { part, vendor, product, version } = parseCpe23(cpe);
   const hasConcreteVersion = version && version !== "*" && version !== "-";
 
-  const cutoff = new Date();
-  cutoff.setFullYear(cutoff.getFullYear() - CVE_LOOKBACK_YEARS);
-
-  const params = {
-    startIndex,
-    resultsPerPage,
-    pubStartDate: cutoff.toISOString().replace(/\.\d{3}Z$/, ".000"),
-  };
+  const params = { startIndex, resultsPerPage };
 
   if (hasConcreteVersion) {
     // cpeName requires dictionary membership but is precise for known versions
@@ -306,10 +299,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * On a 429 we back off and retry once before giving up.
  */
 async function nvdGet(url, params, headers, isAuthenticated) {
-
   const INTER_PAGE_DELAY_MS = isAuthenticated ? 600 : 6500; // ~50/30s vs ~4/30s
   const MAX_RETRIES = 2;
-
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
@@ -454,21 +445,14 @@ function selectTopVulnerabilities(cves, limit = 10) {
 }
 
 exports.fetchCVEs = async (cpe) => {
-  // Skip CPEs with no concrete version — without one, NVD has no filter to apply
-  const { version } = parseCpe23(cpe);
-  if (!version || version === "*" || version === "-") {
-    console.log(`[NVD] Skipping versionless CPE: ${cpe}`);
-    return [];
-  }
-
   console.log("Querying NVD for:", cpe);
 
   try {
     return await getCvesByCpe(cpe, {
       apiKey: process.env.NVD_API_KEY || null,
       maxToReturn: 10,
-      maxToFetch: 20,
-      resultsPerPage: 20
+      maxToFetch: 50,
+      resultsPerPage: 50
     });
   } catch (err) {
     const status = err.response?.status;
