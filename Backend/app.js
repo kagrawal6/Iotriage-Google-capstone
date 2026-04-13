@@ -11,6 +11,7 @@ const cors = require("cors");
 const app = express();
 const scanRoutes = require("./Routes/scanRoutes");
 const chatRoutes = require("./Routes/chatRoutes");
+const downloadRoutes = require("./Routes/downloadRoutes");
 
 /**
  * Enables CORS so the frontend (Vite dev server) can reach the API.
@@ -28,6 +29,7 @@ app.use(express.json({ limit: "10mb" }));
  */
 app.use("/api", scanRoutes);
 app.use("/api", chatRoutes);
+app.use("/api", downloadRoutes);
 
 /**
  * Starts the HTTP server.

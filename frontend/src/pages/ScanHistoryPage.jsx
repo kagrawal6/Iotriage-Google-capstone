@@ -60,10 +60,15 @@ export default function ScanHistoryPage() {
   if (scanHistory.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-400 text-sm mb-4">No scan history yet.</p>
+        <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <p className="text-slate-500 text-sm mb-4">No scan history yet.</p>
         <Link
           to="/upload"
-          className="text-sm underline text-gray-600 hover:text-black"
+          className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
         >
           Upload your first scan
         </Link>
@@ -76,15 +81,15 @@ export default function ScanHistoryPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold mb-1">Scan History</h1>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Scan History</h1>
+          <p className="text-sm text-slate-500">
             {scanHistory.length} scan{scanHistory.length !== 1 ? "s" : ""} stored
             &middot; up to 10 kept (oldest auto-removed)
           </p>
         </div>
         <button
           onClick={() => setConfirmDeleteId("__all__")}
-          className="text-xs text-red-500 hover:text-red-700 underline"
+          className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
         >
           Clear all
         </button>
@@ -92,18 +97,18 @@ export default function ScanHistoryPage() {
 
       {/* Confirm clear-all */}
       {confirmDeleteId === "__all__" && (
-        <div className="mb-4 border border-red-200 bg-red-50 rounded p-3 text-sm flex items-center justify-between">
+        <div className="mb-4 border border-red-200 bg-red-50 rounded-lg p-3 text-sm flex items-center justify-between">
           <span className="text-red-700">Delete all scan history? This cannot be undone.</span>
           <div className="flex gap-2 ml-4">
             <button
               onClick={() => { resetAll(); setConfirmDeleteId(null); }}
-              className="text-xs border border-red-400 text-red-600 hover:bg-red-100 px-3 py-1 rounded"
+              className="text-xs bg-red-600 text-white hover:bg-red-700 px-3 py-1 rounded-lg font-medium transition-colors"
             >
               Delete all
             </button>
             <button
               onClick={() => setConfirmDeleteId(null)}
-              className="text-xs border border-gray-300 px-3 py-1 rounded"
+              className="text-xs border border-slate-300 px-3 py-1 rounded-lg hover:bg-slate-50 transition-colors"
             >
               Cancel
             </button>
@@ -122,8 +127,8 @@ export default function ScanHistoryPage() {
           return (
             <div
               key={scan.id}
-              className={`border rounded p-4 text-sm ${
-                isActive ? "border-black" : "border-gray-200"
+              className={`bg-white rounded-xl border p-4 text-sm shadow-sm transition-shadow hover:shadow-md ${
+                isActive ? "border-slate-900 ring-1 ring-slate-900/10" : "border-slate-200"
               }`}
             >
               {/* Top row: label + active badge */}
@@ -139,26 +144,26 @@ export default function ScanHistoryPage() {
                           if (e.key === "Enter") commitEdit(scan.id);
                           if (e.key === "Escape") setEditingId(null);
                         }}
-                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-black"
+                        className="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400"
                       />
                       <button
                         onClick={() => commitEdit(scan.id)}
-                        className="text-xs border border-gray-400 hover:border-black px-2 py-1 rounded"
+                        className="text-xs bg-slate-900 text-white hover:bg-blue-600 px-3 py-1 rounded-lg font-medium transition-colors"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="text-xs text-gray-400 hover:text-black"
+                        className="text-xs text-slate-400 hover:text-slate-900 transition-colors"
                       >
                         Cancel
                       </button>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-medium truncate">{scan.label}</p>
+                      <p className="font-semibold text-slate-900 truncate">{scan.label}</p>
                       {isActive && (
-                        <span className="text-xs border border-black px-1.5 py-0.5 rounded font-medium shrink-0">
+                        <span className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-full font-medium shrink-0">
                           Active
                         </span>
                       )}
@@ -166,42 +171,42 @@ export default function ScanHistoryPage() {
                   )}
 
                   {/* Date/time */}
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-xs text-slate-400 mt-0.5">
                     {formatDate(scan.createdAt)} at {formatTime(scan.createdAt)}
                   </p>
                 </div>
               </div>
 
               {/* Stats row */}
-              <div className="flex flex-wrap gap-3 text-xs text-gray-500 mb-3">
-                <span>{scan.devices?.length ?? 0} device{scan.devices?.length !== 1 ? "s" : ""}</span>
-                <span>{scan.vulnerabilities?.length ?? 0} CVEs</span>
+              <div className="flex flex-wrap gap-2 text-xs mb-3">
+                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{scan.devices?.length ?? 0} device{scan.devices?.length !== 1 ? "s" : ""}</span>
+                <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{scan.vulnerabilities?.length ?? 0} CVEs</span>
                 {severities.CRITICAL > 0 && (
-                  <span className="font-medium text-gray-700">{severities.CRITICAL} critical</span>
+                  <span className="bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full font-medium">{severities.CRITICAL} critical</span>
                 )}
                 {severities.HIGH > 0 && (
-                  <span>{severities.HIGH} high</span>
+                  <span className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-0.5 rounded-full">{severities.HIGH} high</span>
                 )}
                 {(scan.chatHistory?.length ?? 0) > 0 && (
-                  <span className="text-gray-400">
-                    {scan.chatHistory.length} chat message{scan.chatHistory.length !== 1 ? "s" : ""}
+                  <span className="bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full">
+                    {scan.chatHistory.length} message{scan.chatHistory.length !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
 
               {/* Confirm delete inline */}
               {isConfirmingDelete && (
-                <div className="mb-3 text-xs text-red-600 flex items-center gap-2">
+                <div className="mb-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2 flex items-center gap-2">
                   <span>Delete this scan?</span>
                   <button
                     onClick={() => handleDelete(scan.id)}
-                    className="border border-red-400 text-red-600 hover:bg-red-50 px-2 py-0.5 rounded"
+                    className="bg-red-600 text-white hover:bg-red-700 px-2 py-0.5 rounded-md font-medium transition-colors"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(null)}
-                    className="text-gray-500 hover:text-black"
+                    className="text-slate-500 hover:text-slate-900 transition-colors"
                   >
                     Cancel
                   </button>
@@ -213,7 +218,7 @@ export default function ScanHistoryPage() {
                 {!isActive && (
                   <button
                     onClick={() => handleLoad(scan.id)}
-                    className="text-xs border border-gray-400 hover:border-black px-3 py-1 rounded"
+                    className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-colors"
                   >
                     Load scan
                   </button>
@@ -221,15 +226,15 @@ export default function ScanHistoryPage() {
                 {isActive && (
                   <Link
                     to="/results"
-                    className="text-xs border border-black px-3 py-1 rounded hover:bg-black hover:text-white transition-colors"
+                    className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 font-medium transition-colors"
                   >
-                    View results →
+                    View results &rarr;
                   </Link>
                 )}
                 {!isEditing && (
                   <button
                     onClick={() => startEdit(scan)}
-                    className="text-xs text-gray-500 hover:text-black underline"
+                    className="text-xs text-slate-500 hover:text-slate-900 transition-colors"
                   >
                     Rename
                   </button>
@@ -237,7 +242,7 @@ export default function ScanHistoryPage() {
                 {!isConfirmingDelete && (
                   <button
                     onClick={() => setConfirmDeleteId(scan.id)}
-                    className="text-xs text-red-400 hover:text-red-600 underline ml-auto"
+                    className="text-xs text-red-400 hover:text-red-600 ml-auto transition-colors"
                   >
                     Delete
                   </button>
