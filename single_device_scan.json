@@ -1,0 +1,57 @@
+[
+    {
+        "ip_address": "192.168.0.1",
+        "mac_address": "24:2F:D0:28:F3:67",
+        "device_name": "Unknown",
+        "device_type": "general purpose",
+        "os_matches": [
+            {
+                "name": "Linux 2.6.23 - 2.6.38",
+                "accuracy": "100",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:2.6:*:*:*:*:*:*:*"
+                ]
+            }
+        ],
+        "open_ports": [
+            {
+                "port": 22,
+                "protocol": "tcp",
+                "service": "ssh",
+                "product": "Dropbear sshd",
+                "version": "2020.80",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 53,
+                "protocol": "tcp",
+                "service": "domain",
+                "product": "ISC BIND",
+                "version": "9.18.28-1~deb12u2",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:*:*:*:*:*:*:*:*"
+                ]
+            },
+            {
+                "port": 80,
+                "protocol": "tcp",
+                "service": "http",
+                "product": "",
+                "version": "",
+                "cpe": []
+            },
+            {
+                "port": 1900,
+                "protocol": "tcp",
+                "service": "upnp",
+                "product": "Portable SDK for UPnP devices",
+                "version": "1.6.19",
+                "cpe": [
+                    "cpe:2.3:o:linux:linux_kernel:2.6.36:*:*:*:*:*:*:*"
+                ]
+            }
+        ]
+    }
+]
