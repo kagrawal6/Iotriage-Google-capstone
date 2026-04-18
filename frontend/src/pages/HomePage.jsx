@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import TermTip from "../components/TermTip";
 
 /**
  * HomePage — Functional landing page with instructions.
@@ -18,7 +19,11 @@ export default function HomePage() {
           </h1>
           <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8">
             Scan your local network for IoT devices, identify known
-            vulnerabilities (CVEs), and get AI-powered remediation guidance.
+            vulnerabilities (
+            <TermTip term="CVE" variant="onDark">
+              CVEs
+            </TermTip>
+            ), and get AI-powered remediation guidance.
           </p>
           <div className="flex items-center justify-center gap-3">
             <Link
@@ -66,8 +71,10 @@ export default function HomePage() {
             </div>
             <h3 className="font-bold text-slate-900 mb-1">Identify</h3>
             <p className="text-sm text-slate-500">
-              Upload results and the backend extracts CPEs and queries the NVD
-              for known CVEs with severity ratings.
+              Upload results and the backend extracts{" "}
+              <TermTip term="CPE">CPEs</TermTip> and queries the{" "}
+              <TermTip term="NVD">NVD</TermTip> for known{" "}
+              <TermTip term="CVE">CVEs</TermTip> with severity ratings.
             </p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
