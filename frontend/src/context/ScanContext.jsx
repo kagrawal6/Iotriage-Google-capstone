@@ -7,7 +7,10 @@ import useStorage from "../storage/useStorage";
  * Shared state for scan results across pages.
  *
  * Scan history is stored as an array of scan entries, each with:
- *   { id, createdAt, label, devices, vulnerabilities, chatHistory, deviceChats }
+ *   { id, createdAt, label, expertiseMode, devices, vulnerabilities, chatHistory, deviceChats }
+ *
+ * expertiseMode is one of: "beginner" | "intermediate" | "expert"
+ * It is set at upload time and used by the backend to tailor LLM output language.
  *
  * activeScanId tracks which scan is currently being viewed.
  * History is capped at MAX_HISTORY scans (oldest dropped on overflow).
@@ -47,6 +50,12 @@ export function ScanProvider({ children }) {
   const chatHistory = activeScan?.chatHistory || [];
   const deviceChats = activeScan?.deviceChats || {};
 
+  /**
+   * The expertise mode for the currently active scan.
+   * Falls back to "intermediate" for scans stored before this field existed.
+   */
+  const expertiseMode = activeScan?.expertiseMode || "intermediate";
+
   // ── internal updater for the active scan entry ───────────────────────────
   const updateActiveScan = (updater) => {
     setScanHistory((prev) =>
@@ -55,7 +64,11 @@ export function ScanProvider({ children }) {
   };
 
   // ── store a new scan (called after successful upload) ────────────────────
-  const storeScanResults = (results) => {
+  /**
+   * @param {object} results        - { devices, vulnerabilities } from the backend
+   * @param {string} mode           - "beginner" | "intermediate" | "expert"
+   */
+  const storeScanResults = (results, mode = "intermediate") => {
     setError(null);
     const id = generateId();
     const devices = results.devices || [];
@@ -65,6 +78,7 @@ export function ScanProvider({ children }) {
       id,
       createdAt: new Date().toISOString(),
       label: buildLabel(devices),
+      expertiseMode: mode,
       devices,
       vulnerabilities,
       chatHistory: [],
@@ -73,7 +87,6 @@ export function ScanProvider({ children }) {
 
     setScanHistory((prev) => {
       const updated = [newEntry, ...prev];
-      // Cap history length — drop oldest entries
       return updated.slice(0, MAX_HISTORY);
     });
     setActiveScanId(id);
@@ -96,7 +109,6 @@ export function ScanProvider({ children }) {
   const deleteScan = (id) => {
     setScanHistory((prev) => prev.filter((s) => s.id !== id));
     if (activeScanId === id) {
-      // Activate the next most recent scan, or clear
       setScanHistory((prev) => {
         const remaining = prev.filter((s) => s.id !== id);
         setActiveScanId(remaining[0]?.id || null);
@@ -154,6 +166,7 @@ export function ScanProvider({ children }) {
         scanResults,
         chatHistory,
         deviceChats,
+        expertiseMode,
         // history
         scanHistory,
         activeScanId,
