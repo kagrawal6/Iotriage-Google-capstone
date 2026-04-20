@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FileUploader from "../components/FileUploader";
+import TermTip from "../components/TermTip";
 import { useScan } from "../context/ScanContext";
 import { uploadScan } from "../services/api";
 
