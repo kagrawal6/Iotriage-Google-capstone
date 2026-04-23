@@ -25,10 +25,35 @@ export default function Navbar() {
   return (
     <nav className="border-b border-gray-300 bg-white sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4">
-        <div className="flex items-center justify-between h-12">
-          <NavLink to="/" className="text-base font-bold text-[#1a73e8]">
-            IoTriage
-          </NavLink>
+        <div className="flex items-center justify-between h-16">
+          <div className="flex items-center gap-2">
+            <NavLink to="/" className="inline-flex items-center gap-0 text-base font-bold text-[#1a73e8] leading-none">
+              <svg
+                className="w-16 h-16 shrink-0"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M12 2l7 4v5c0 5.1-3.1 8.4-7 9-3.9-.6-7-3.9-7-9V6z" fill="white" />
+                <path d="M12 4.1l5.6 3.2v3.8c0 3.9-2.3 6.5-5.6 7.2z" fill="#4285F4" />
+                <path d="M12 4.1L6.4 7.3v3.8c0 3.9 2.3 6.5 5.6 7.2z" fill="#0F9D58" />
+                <path d="M9 9.2h6L12 14z" fill="#FBBC05" />
+              </svg>
+              IoTriage
+            </NavLink>
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-900 leading-none translate-y-[1px]">
+              <span>By</span>
+              <span className="font-semibold tracking-[0.01em]">
+                <span className="text-[#4285F4]">G</span>
+                <span className="text-[#DB4437]">o</span>
+                <span className="text-[#F4B400]">o</span>
+                <span className="text-[#4285F4]">g</span>
+                <span className="text-[#0F9D58]">l</span>
+                <span className="text-[#DB4437]">e</span>
+              </span>
+              <span>Capstone Group '26</span>
+            </span>
+          </div>
 
           <div className="flex items-center gap-1">
             <NavLink to="/" className={linkClass("blue")}>
