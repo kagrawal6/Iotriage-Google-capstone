@@ -41,7 +41,7 @@ export default function Navbar() {
               </svg>
               IoTriage
             </NavLink>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-900 leading-none translate-y-[1px]">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-900 leading-none translate-y-[1.5px]">
               <span>By</span>
               <span className="font-semibold tracking-[0.01em]">
                 <span className="text-[#4285F4]">G</span>
