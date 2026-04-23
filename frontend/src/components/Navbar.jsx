@@ -26,10 +26,10 @@ export default function Navbar() {
     <nav className="border-b border-gray-300 bg-white sticky top-0 z-50">
       <div className="max-w-5xl mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
-            <NavLink to="/" className="inline-flex items-center gap-0 text-base font-bold text-[#1a73e8] leading-none">
+          <div className="flex items-center gap-1.5">
+            <NavLink to="/" className="inline-flex items-center gap-1 text-base font-bold text-[#1a73e8] leading-none">
               <svg
-                className="w-16 h-16 shrink-0"
+                className="w-16 h-16 shrink-0 -mr-2"
                 viewBox="0 0 24 24"
                 aria-hidden="true"
                 focusable="false"
