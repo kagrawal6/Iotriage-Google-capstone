@@ -9,7 +9,11 @@ body {
 }
 
 a {
-  color: #2563eb;
+  color: #1a73e8;
+}
+
+a:hover {
+  color: #1765cc;
 }
 
 code {

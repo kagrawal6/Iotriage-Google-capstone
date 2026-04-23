@@ -68,7 +68,7 @@ export default function ScanHistoryPage() {
         <p className="text-slate-500 text-sm mb-4">No scan history yet.</p>
         <Link
           to="/upload"
-          className="inline-flex items-center gap-2 bg-slate-900 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors"
+          className="inline-flex items-center gap-2 bg-[#1a73e8] text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-[#1765cc] transition-colors"
         >
           Upload your first scan
         </Link>
@@ -89,7 +89,7 @@ export default function ScanHistoryPage() {
         </div>
         <button
           onClick={() => setConfirmDeleteId("__all__")}
-          className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+          className="text-xs !text-white bg-[#d93025] hover:bg-[#b3261e] font-medium transition-colors px-3 py-1.5 rounded-lg"
         >
           Clear all
         </button>
@@ -128,7 +128,7 @@ export default function ScanHistoryPage() {
             <div
               key={scan.id}
               className={`bg-white rounded-xl border p-4 text-sm shadow-sm transition-shadow hover:shadow-md ${
-                isActive ? "border-slate-900 ring-1 ring-slate-900/10" : "border-slate-200"
+                isActive ? "border-[#1a73e8] ring-1 ring-[#1a73e8]/20" : "border-slate-200"
               }`}
             >
               {/* Top row: label + active badge */}
@@ -148,7 +148,7 @@ export default function ScanHistoryPage() {
                       />
                       <button
                         onClick={() => commitEdit(scan.id)}
-                        className="text-xs bg-slate-900 text-white hover:bg-blue-600 px-3 py-1 rounded-lg font-medium transition-colors"
+                        className="text-xs bg-[#1a73e8] !text-white hover:bg-[#1765cc] px-3 py-1 rounded-lg font-medium transition-colors"
                       >
                         Save
                       </button>
@@ -163,7 +163,7 @@ export default function ScanHistoryPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-semibold text-slate-900 truncate">{scan.label}</p>
                       {isActive && (
-                        <span className="text-xs bg-slate-900 text-white px-2 py-0.5 rounded-full font-medium shrink-0">
+                        <span className="text-xs bg-[#188038] text-white px-2 py-0.5 rounded-full font-medium shrink-0">
                           Active
                         </span>
                       )}
@@ -200,7 +200,7 @@ export default function ScanHistoryPage() {
                   <span>Delete this scan?</span>
                   <button
                     onClick={() => handleDelete(scan.id)}
-                    className="bg-red-600 text-white hover:bg-red-700 px-2 py-0.5 rounded-md font-medium transition-colors"
+                    className="bg-red-600 !text-white hover:bg-red-700 px-2 py-0.5 rounded-md font-medium transition-colors"
                   >
                     Delete
                   </button>
@@ -218,7 +218,7 @@ export default function ScanHistoryPage() {
                 {!isActive && (
                   <button
                     onClick={() => handleLoad(scan.id)}
-                    className="text-xs bg-slate-100 text-slate-700 hover:bg-slate-200 px-3 py-1.5 rounded-lg font-medium transition-colors"
+                    className="text-xs bg-[#188038] !text-white hover:bg-[#0f9d58] px-3 py-1.5 rounded-lg font-medium transition-colors"
                   >
                     Load scan
                   </button>
@@ -226,7 +226,7 @@ export default function ScanHistoryPage() {
                 {isActive && (
                   <Link
                     to="/results"
-                    className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 font-medium transition-colors"
+                    className="text-xs bg-[#1a73e8] !text-white px-3 py-1.5 rounded-lg hover:bg-[#1765cc] font-medium transition-colors"
                   >
                     View results &rarr;
                   </Link>

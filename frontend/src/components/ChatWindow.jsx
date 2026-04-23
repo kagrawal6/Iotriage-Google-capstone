@@ -98,12 +98,12 @@ export default function ChatWindow() {
             }`}
           >
             {msg.role === "assistant" && (
-              <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold mr-2 mt-0.5 shrink-0">AI</div>
+              <div className="w-7 h-7 rounded-full bg-[#188038] text-white flex items-center justify-center text-xs font-bold mr-2 mt-0.5 shrink-0">AI</div>
             )}
             <div
               className={`max-w-[75%] rounded-xl px-4 py-2.5 text-sm ${
                 msg.role === "user"
-                  ? "bg-slate-900 text-white"
+                  ? "bg-[#1a73e8] text-white"
                   : "bg-white border border-slate-200 text-slate-700 shadow-sm"
               }`}
             >
@@ -139,7 +139,7 @@ export default function ChatWindow() {
         <button
           type="submit"
           disabled={!scanResults || !input.trim() || isSending}
-          className="bg-slate-900 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          className="bg-[#1a73e8] text-white hover:bg-[#1765cc] disabled:opacity-40 disabled:cursor-not-allowed px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
         >
           Send
         </button>

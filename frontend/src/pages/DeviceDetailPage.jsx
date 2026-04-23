@@ -96,7 +96,7 @@ export default function DeviceDetailPage() {
       {/* Back link */}
       <Link
         to="/results"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-6 transition-colors"
+        className="inline-flex items-center gap-1.5 text-sm text-[#1a73e8] hover:text-[#1765cc] mb-6 transition-colors"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -195,12 +195,12 @@ export default function DeviceDetailPage() {
         {chatOpen && (
           <div className="mb-3 w-96 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden flex flex-col" style={{ height: "420px" }}>
             {/* Chat Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-900 text-white">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-[#1a73e8] text-white">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-white text-slate-900 flex items-center justify-center text-xs font-bold">AI</div>
+                <div className="w-6 h-6 rounded-full bg-white text-[#1a73e8] flex items-center justify-center text-xs font-bold">AI</div>
                 <span className="text-sm font-medium">Ask about this device</span>
               </div>
-              <button onClick={() => setChatOpen(false)} className="text-slate-300 hover:text-white transition-colors">
+              <button onClick={() => setChatOpen(false)} className="text-white hover:text-white/80 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -220,14 +220,14 @@ export default function DeviceDetailPage() {
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   {msg.role === "assistant" && (
-                    <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold mr-2 shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-full bg-[#188038] text-white flex items-center justify-center text-xs font-bold mr-2 shrink-0 mt-0.5">
                       AI
                     </div>
                   )}
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                       msg.role === "user"
-                        ? "bg-slate-900 text-white"
+                        ? "bg-[#1a73e8] text-white"
                         : "bg-slate-50 border border-slate-200 text-slate-700"
                     }`}
                   >
@@ -253,7 +253,7 @@ export default function DeviceDetailPage() {
               <button
                 type="submit"
                 disabled={!input.trim() || isSending}
-                className="bg-slate-900 text-white hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="bg-[#1a73e8] text-white hover:bg-[#1765cc] disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 Send
               </button>
@@ -264,7 +264,7 @@ export default function DeviceDetailPage() {
         {/* FAB */}
         <button
           onClick={() => setChatOpen((o) => !o)}
-          className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
+          className="w-14 h-14 rounded-full bg-[#1a73e8] text-white shadow-lg hover:bg-[#1765cc] transition-colors flex items-center justify-center"
         >
           {chatOpen ? (
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
