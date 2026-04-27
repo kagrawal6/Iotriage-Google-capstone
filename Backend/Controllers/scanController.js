@@ -12,7 +12,7 @@ function parseScanToDevices(scanData) {
     throw new Error("Invalid scan format: expected a JSON array of device objects");
   }
 
-  const devices = [];
+  let devices = [];
   for (let i = 0; i < scanData.length; i++) {
     const d = scanData[i];
     if (d == null || typeof d !== "object") {
@@ -67,7 +67,7 @@ exports.uploadScan = async (req, res) => {
     console.log(`[Scan] NVD lookups done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 
     const severityRank = { CRITICAL: 4, HIGH: 3, MEDIUM: 2, LOW: 1 };
-    const vulnerabilities = results
+    let vulnerabilities = results
       .flatMap(({ device, cves }) =>
         cves.map(cve => new Vulnerability({ ...cve, deviceIp: device.ipAddress }))
       )
